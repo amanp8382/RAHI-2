@@ -1,0 +1,213 @@
+/* Login Page Specific Styles */
+.login-page {
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(-45deg, #f5f2ee, #f0ebe4, #ebe5d8, #f5f2ee);
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite;
+  transition: background 0.4s, color 0.4s;
+  position: relative;
+}
+
+.login-page * {
+  box-sizing: border-box;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.login-page.light-mode {
+  background: linear-gradient(-45deg, #f5f2ee, #f0ebe4, #ebe5d8, #f5f2ee);
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite;
+  color: #5c4a3a;
+}
+
+/* Login Box */
+.login-container {
+  background: rgba(140, 103, 75, 0.15);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 30px;
+  width: 400px;
+  color: #5c4a3a;
+  text-align: center;
+  box-shadow: 0px 10px 25px rgba(92, 74, 58, 0.3);
+  z-index: 10;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  margin: 0 5px;
+  background: rgba(140, 103, 75, 0.1);
+  color: #5c4a3a;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.tab.active {
+  background: linear-gradient(135deg, #8c674b, #6b4e37);
+  color: #f5f2ee;
+  transform: scale(1.05);
+}
+
+.tab:hover {
+  background: rgba(140, 103, 75, 0.2);
+}
+
+/* Forms */
+.form {
+  display: none;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.form.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+h2 {
+  margin-bottom: 15px;
+}
+
+.input-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.input-group label {
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.input-group input,
+.input-group select {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  font-size: 1rem;
+}
+
+/* Password input container */
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-container input {
+  padding-right: 45px; /* Make room for the toggle button */
+}
+
+/* Password toggle button */
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #8c674b;
+  padding: 5px;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  z-index: 1;
+}
+
+.password-toggle-btn:hover {
+  background-color: rgba(140, 103, 75, 0.1);
+  color: #6b4e37;
+}
+
+.password-toggle-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.password-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.password-toggle-btn:disabled:hover {
+  background-color: transparent;
+  color: #8c674b;
+  transform: translateY(-50%);
+}
+
+.login-btn {
+  margin-top: 15px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #8c674b, #6b4e37);
+  color: #f5f2ee;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.3s;
+}
+
+.login-btn:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #6b4e37, #8c674b);
+}
+
+/* Dark/Light Mode Toggle */
+.mode-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #6b4e37;
+  color: #f5f2ee;
+  border: none;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0px 4px 10px rgba(92, 74, 58, 0.4);
+  transition: background 0.3s, transform 0.2s;
+  z-index: 11;
+}
+
+.mode-btn:hover {
+  background: #8c674b;
+  transform: scale(1.1);
+}
+
+body.light-mode .mode-btn {
+  background: #8c674b;
+  color: #f5f2ee;
+}

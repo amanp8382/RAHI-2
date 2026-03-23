@@ -1,0 +1,106 @@
+/* Clean Map Container Styles */
+
+.clean-map-section {
+  width: 100%;
+  padding: 20px;
+}
+
+.map-container {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 600px;
+  position: relative;
+}
+
+/* Ensure proper height inheritance */
+.map-container > div,
+.map-container > div > div {
+  height: 600px !important;
+  width: 100% !important;
+}
+
+/* Google Maps specific fixes */
+.gm-style {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.gm-style > div:first-child {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Remove any max-width constraints on images */
+.gm-style img {
+  max-width: none !important;
+  height: auto !important;
+}
+
+/* Loading state styling */
+.map-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 600px;
+  width: 100%;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Feature info styling */
+.map-info {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.feature-item:not(:last-child) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .clean-map-section {
+    padding: 15px;
+  }
+  
+  .map-container {
+    min-height: 400px;
+  }
+  
+  .map-container > div,
+  .map-container > div > div {
+    height: 400px !important;
+  }
+  
+  .map-info {
+    padding: 15px;
+  }
+  
+  .feature-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .map-container {
+    min-height: 350px;
+  }
+  
+  .map-container > div,
+  .map-container > div > div {
+    height: 350px !important;
+  }
+}

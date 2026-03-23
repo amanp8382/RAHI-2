@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAAHI - Smart Tourism Safety Dashboard</title>
+    <link rel="stylesheet" href="styles/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>RAAHI</span>
+            </div>
+            <div class="header-options">
+                <div class="location-selector" onclick="toggleLocationSelector()">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Mumbai, India</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="time-range-selector" onclick="toggleTimeRange()">
+                    <i class="fas fa-clock"></i>
+                    <span>Last 24h</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="top-bar-center">
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search by Tourist ID or Incident ID..." id="globalSearch">
+                <div class="search-filters">
+                    <button class="search-filter-btn active" data-filter="all">
+                        <i class="fas fa-globe"></i> All
+                    </button>
+                    <button class="search-filter-btn" data-filter="tourists">
+                        <i class="fas fa-users"></i> Tourists
+                    </button>
+                    <button class="search-filter-btn" data-filter="incidents">
+                        <i class="fas fa-exclamation-triangle"></i> Incidents
+                    </button>
+                    <button class="search-filter-btn" data-filter="locations">
+                        <i class="fas fa-map"></i> Locations
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="top-bar-right">
+            <div class="header-actions">
+                <div class="emergency-button" onclick="triggerEmergency()">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Emergency</span>
+                </div>
+                <div class="export-button" onclick="toggleExportMenu()">
+                    <i class="fas fa-download"></i>
+                    <span>Export</span>
+                </div>
+                <div class="system-status" onclick="toggleSystemStatus()">
+                    <div class="status-indicator online"></div>
+                    <span>System Online</span>
+                </div>
+                <div class="language-selector" onclick="toggleLanguageMenu()">
+                    <i class="fas fa-globe"></i>
+                    <span>EN</span>
+                </div>
+                <div class="help-button" onclick="toggleHelpMenu()">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+            </div>
+            <div class="notification-icon" onclick="toggleNotifications()">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">3</span>
+            </div>
+            <div class="admin-profile" onclick="toggleProfileMenu()">
+                <img src="https://via.placeholder.com/32x32/4F46E5/FFFFFF?text=A" alt="Admin" class="profile-avatar">
+                <span class="admin-name">Admin</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Sidebar -->
+        <nav class="sidebar">
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-view="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" data-view="incidents">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Incidents</span>
+                </li>
+                <li class="menu-item" data-view="tourists">
+                    <i class="fas fa-users"></i>
+                    <span>Tourists</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="view active">
+                <div class="view-header">
+                    <h1>Core Monitoring Dashboard</h1>
+                    <p class="view-subtitle">Real-time tourist safety monitoring and incident tracking</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">1,247</div>
+                            <div class="stat-label">Total Tourists</div>
+                            <div class="stat-change positive">+12 today</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">23</div>
+                            <div class="stat-label">Active Alerts</div>
+                            <div class="stat-change negative">+5 new</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon red">
+                            <i class="fas fa-user-slash"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">3</div>
+                            <div class="stat-label">Missing Persons</div>
+                            <div class="stat-change neutral">No change</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-wifi"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">156</div>
+                            <div class="stat-label">IoT Devices Online</div>
+                            <div class="stat-change positive">98.2%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Content -->
+                <div class="dashboard-content">
+                    <div class="dashboard-left">
+                        <!-- Interactive Heatmap Panel -->
+                        <div class="panel heatmap-panel">
+                            <div class="panel-header">
+                                <h3>Tourist Activity Heatmap</h3>
+                                <div class="panel-controls">
+                                    <button class="btn-secondary">Last 24h</button>
+                                    <button class="btn-icon"><i class="fas fa-expand"></i></button>
+                                </div>
+                            </div>
+                            <div class="heatmap-container">
+                                <div class="heatmap-placeholder">
+                                    <div class="map-legend">
+                                        <div class="legend-item">
+                                            <span class="legend-color safe"></span>
+                                            <span>Safe Areas</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-color moderate"></span>
+                                            <span>Moderate Risk</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-color high"></span>
+                                            <span>High Risk</span>
+                                        </div>
+                                    </div>
+                                    <div class="heatmap-zones">
+                                        <div class="zone safe zone-1"></div>
+                                        <div class="zone moderate zone-2"></div>
+                                        <div class="zone high zone-3"></div>
+                                        <div class="zone safe zone-4"></div>
+                                        <div class="tourist-cluster cluster-1">
+                                            <i class="fas fa-users"></i>
+                                            <span>45</span>
+                                        </div>
+                                        <div class="tourist-cluster cluster-2">
+                                            <i class="fas fa-users"></i>
+                                            <span>23</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Incidents Table -->
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3>Recent Incidents</h3>
+                                <button class="btn-primary">View All</button>
+                            </div>
+                            <div class="table-container">
+                                <table class="incidents-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Type</th>
+                                            <th>Time</th>
+                                            <th>Location</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>#INC001</td>
+                                            <td><span class="incident-type sos">SOS Alert</span></td>
+                                            <td>14:32</td>
+                                            <td>Marine Drive</td>
+                                            <td><span class="status-badge pending">Pending</span></td>
+                                            <td><button class="btn-action">View</button></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#INC002</td>
+                                            <td><span class="incident-type geofence">Geo-fence Breach</span></td>
+                                            <td>13:45</td>
+                                            <td>Old Fort Area</td>
+                                            <td><span class="status-badge resolved">Resolved</span></td>
+                                            <td><button class="btn-action">View</button></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#INC003</td>
+                                            <td><span class="incident-type anomaly">Anomaly Detected</span></td>
+                                            <td>12:18</td>
+                                            <td>Gateway of India</td>
+                                            <td><span class="status-badge pending">Pending</span></td>
+                                            <td><button class="btn-action">View</button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-right">
+                        <!-- Live Alert Feed -->
+                        <div class="panel alert-feed">
+                            <div class="panel-header">
+                                <h3>Live Alert Feed</h3>
+                                <div class="live-indicator">
+                                    <span class="live-dot"></span>
+                                    <span>Live</span>
+                                </div>
+                            </div>
+                            <div class="alert-list">
+                                <div class="alert-item high">
+                                    <div class="alert-time">14:32</div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">SOS Alert Triggered</div>
+                                        <div class="alert-details">Tourist ID: T001247 - Marine Drive</div>
+                                    </div>
+                                    <div class="alert-action">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </div>
+                                </div>
+
+                                <div class="alert-item medium">
+                                    <div class="alert-time">14:15</div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">Geo-fence Breach</div>
+                                        <div class="alert-details">Tourist ID: T001203 - Restricted Zone B</div>
+                                    </div>
+                                    <div class="alert-action">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </div>
+                                </div>
+
+                                <div class="alert-item low">
+                                    <div class="alert-time">13:58</div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">Device Offline</div>
+                                        <div class="alert-details">IoT Sensor #156 - Gateway Plaza</div>
+                                    </div>
+                                    <div class="alert-action">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </div>
+                                </div>
+
+                                <div class="alert-item medium">
+                                    <div class="alert-time">13:42</div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">Anomaly Detected</div>
+                                        <div class="alert-details">Unusual crowd density - Taj Hotel Area</div>
+                                    </div>
+                                    <div class="alert-action">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incident Management View -->
+            <div id="incidents-view" class="view">
+                <div class="view-header">
+                    <h1>Incident Management</h1>
+                    <p class="view-subtitle">Monitor, track, and resolve tourist safety incidents</p>
+                </div>
+
+                <div class="incidents-content">
+                    <!-- Incident Filters -->
+                    <div class="filters-bar">
+                        <div class="filter-group">
+                            <label>Filter by Severity:</label>
+                            <select class="filter-select">
+                                <option value="all">All Severities</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Status:</label>
+                            <select class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="escalated">Escalated</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary">+ New Incident</button>
+                    </div>
+
+                    <!-- Incident List -->
+                    <div class="incident-grid">
+                        <div class="incident-card high-severity">
+                            <div class="incident-header">
+                                <div class="incident-id">#INC001</div>
+                                <div class="severity-tag high">High</div>
+                            </div>
+                            <div class="incident-info">
+                                <h4>SOS Emergency Alert</h4>
+                                <p>Tourist reported distress signal from Marine Drive area</p>
+                                <div class="incident-meta">
+                                    <span><i class="fas fa-clock"></i> 45 minutes ago</span>
+                                    <span><i class="fas fa-map-marker-alt"></i> Marine Drive</span>
+                                </div>
+                            </div>
+                            <div class="incident-timeline">
+                                <div class="timeline-step completed">
+                                    <div class="step-dot"></div>
+                                    <span>Detected</span>
+                                </div>
+                                <div class="timeline-step completed">
+                                    <div class="step-dot"></div>
+                                    <span>Escalated</span>
+                                </div>
+                                <div class="timeline-step current">
+                                    <div class="step-dot"></div>
+                                    <span>In Progress</span>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="step-dot"></div>
+                                    <span>Resolved</span>
+                                </div>
+                            </div>
+                            <div class="incident-actions">
+                                <button class="btn-action-primary">
+                                    <i class="fas fa-phone"></i> Notify Police
+                                </button>
+                                <button class="btn-action-secondary">
+                                    <i class="fas fa-ambulance"></i> Notify Ambulance
+                                </button>
+                                <button class="btn-action-success">
+                                    <i class="fas fa-check"></i> Mark Resolved
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="incident-card medium-severity">
+                            <div class="incident-header">
+                                <div class="incident-id">#INC002</div>
+                                <div class="severity-tag medium">Medium</div>
+                            </div>
+                            <div class="incident-info">
+                                <h4>Geo-fence Breach</h4>
+                                <p>Tourist entered restricted area without proper authorization</p>
+                                <div class="incident-meta">
+                                    <span><i class="fas fa-clock"></i> 2 hours ago</span>
+                                    <span><i class="fas fa-map-marker-alt"></i> Old Fort Area</span>
+                                </div>
+                            </div>
+                            <div class="incident-timeline">
+                                <div class="timeline-step completed">
+                                    <div class="step-dot"></div>
+                                    <span>Detected</span>
+                                </div>
+                                <div class="timeline-step completed">
+                                    <div class="step-dot"></div>
+                                    <span>Escalated</span>
+                                </div>
+                                <div class="timeline-step completed">
+                                    <div class="step-dot"></div>
+                                    <span>In Progress</span>
+                                </div>
+                                <div class="timeline-step completed">
+                                    <div class="step-dot"></div>
+                                    <span>Resolved</span>
+                                </div>
+                            </div>
+                            <div class="incident-actions">
+                                <button class="btn-action-secondary" disabled>
+                                    <i class="fas fa-check"></i> Resolved
+                                </button>
+                                <button class="btn-action-primary">
+                                    <i class="fas fa-eye"></i> View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tourist Management View -->
+            <div id="tourists-view" class="view">
+                <div class="view-header">
+                    <h1>Tourist Management</h1>
+                    <p class="view-subtitle">Monitor tourist profiles, locations, and safety status</p>
+                </div>
+
+                <div class="tourists-content">
+                    <div class="tourists-layout">
+                        <div class="tourists-main">
+                            <!-- Search and Filters -->
+                            <div class="search-filters">
+                                <div class="search-bar">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" placeholder="Search tourists by ID, name, or location...">
+                                </div>
+                                <div class="filter-buttons">
+                                    <button class="filter-btn active">All</button>
+                                    <button class="filter-btn">Active</button>
+                                    <button class="filter-btn">At Risk</button>
+                                    <button class="filter-btn">Offline</button>
+                                </div>
+                            </div>
+
+                            <!-- Tourist List -->
+                            <div class="tourist-grid">
+                                <div class="tourist-card">
+                                    <div class="tourist-avatar">
+                                        <img src="https://via.placeholder.com/48x48/4F46E5/FFFFFF?text=JD" alt="Tourist">
+                                        <div class="status-indicator online"></div>
+                                    </div>
+                                    <div class="tourist-info">
+                                        <h4>John Doe</h4>
+                                        <p class="tourist-id">ID: T001247</p>
+                                        <div class="tourist-location">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <span>Marine Drive</span>
+                                        </div>
+                                        <div class="tourist-status">
+                                            <span class="status-badge safe">Safe</span>
+                                            <span class="last-seen">Updated 2m ago</span>
+                                        </div>
+                                    </div>
+                                    <div class="tourist-actions">
+                                        <button class="btn-icon" title="View Profile">
+                                            <i class="fas fa-user"></i>
+                                        </button>
+                                        <button class="btn-icon" title="Track Location">
+                                            <i class="fas fa-map"></i>
+                                        </button>
+                                        <button class="btn-icon" title="Send Alert">
+                                            <i class="fas fa-bell"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="tourist-card at-risk">
+                                    <div class="tourist-avatar">
+                                        <img src="https://via.placeholder.com/48x48/EF4444/FFFFFF?text=MS" alt="Tourist">
+                                        <div class="status-indicator warning"></div>
+                                    </div>
+                                    <div class="tourist-info">
+                                        <h4>Maria Silva</h4>
+                                        <p class="tourist-id">ID: T001203</p>
+                                        <div class="tourist-location">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <span>Old Fort Area</span>
+                                        </div>
+                                        <div class="tourist-status">
+                                            <span class="status-badge warning">At Risk</span>
+                                            <span class="last-seen">Updated 15m ago</span>
+                                        </div>
+                                    </div>
+                                    <div class="tourist-actions">
+                                        <button class="btn-icon" title="View Profile">
+                                            <i class="fas fa-user"></i>
+                                        </button>
+                                        <button class="btn-icon" title="Track Location">
+                                            <i class="fas fa-map"></i>
+                                        </button>
+                                        <button class="btn-icon alert" title="Send Alert">
+                                            <i class="fas fa-bell"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="tourist-card">
+                                    <div class="tourist-avatar">
+                                        <img src="https://via.placeholder.com/48x48/10B981/FFFFFF?text=RK" alt="Tourist">
+                                        <div class="status-indicator online"></div>
+                                    </div>
+                                    <div class="tourist-info">
+                                        <h4>Raj Kumar</h4>
+                                        <p class="tourist-id">ID: T001156</p>
+                                        <div class="tourist-location">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <span>Gateway of India</span>
+                                        </div>
+                                        <div class="tourist-status">
+                                            <span class="status-badge safe">Safe</span>
+                                            <span class="last-seen">Updated 1m ago</span>
+                                        </div>
+                                    </div>
+                                    <div class="tourist-actions">
+                                        <button class="btn-icon" title="View Profile">
+                                            <i class="fas fa-user"></i>
+                                        </button>
+                                        <button class="btn-icon" title="Track Location">
+                                            <i class="fas fa-map"></i>
+                                        </button>
+                                        <button class="btn-icon" title="Send Alert">
+                                            <i class="fas fa-bell"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tourists-sidebar">
+                            <!-- Watchlist Panel -->
+                            <div class="panel watchlist-panel">
+                                <div class="panel-header">
+                                    <h3>Watchlist</h3>
+                                    <button class="btn-secondary">+ Add</button>
+                                </div>
+                                <div class="watchlist-items">
+                                    <div class="watchlist-item">
+                                        <div class="watchlist-avatar">
+                                            <img src="https://via.placeholder.com/32x32/EF4444/FFFFFF?text=AJ" alt="Tourist">
+                                        </div>
+                                        <div class="watchlist-info">
+                                            <div class="watchlist-name">Alex Johnson</div>
+                                            <div class="watchlist-reason">Repeat offender</div>
+                                        </div>
+                                        <div class="watchlist-status high"></div>
+                                    </div>
+                                    <div class="watchlist-item">
+                                        <div class="watchlist-avatar">
+                                            <img src="https://via.placeholder.com/32x32/F59E0B/FFFFFF?text=LC" alt="Tourist">
+                                        </div>
+                                        <div class="watchlist-info">
+                                            <div class="watchlist-name">Lisa Chen</div>
+                                            <div class="watchlist-reason">Restricted area access</div>
+                                        </div>
+                                        <div class="watchlist-status medium"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Stats -->
+                            <div class="panel">
+                                <div class="panel-header">
+                                    <h3>Quick Stats</h3>
+                                </div>
+                                <div class="quick-stats">
+                                    <div class="quick-stat-item">
+                                        <div class="quick-stat-number">1,247</div>
+                                        <div class="quick-stat-label">Total Tourists</div>
+                                    </div>
+                                    <div class="quick-stat-item">
+                                        <div class="quick-stat-number">1,198</div>
+                                        <div class="quick-stat-label">Currently Safe</div>
+                                    </div>
+                                    <div class="quick-stat-item">
+                                        <div class="quick-stat-number">46</div>
+                                        <div class="quick-stat-label">Monitoring Required</div>
+                                    </div>
+                                    <div class="quick-stat-item">
+                                        <div class="quick-stat-number">3</div>
+                                        <div class="quick-stat-label">Missing/At Risk</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Dropdown -->
+    <div id="notification-dropdown" class="dropdown-menu">
+        <div class="dropdown-header">
+            <h3>Notifications</h3>
+            <button class="btn-text">Mark all read</button>
+        </div>
+        <div class="notification-list">
+            <div class="notification-item unread">
+                <div class="notification-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">New SOS Alert</div>
+                    <div class="notification-text">Tourist T001247 triggered emergency alert</div>
+                    <div class="notification-time">2 minutes ago</div>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notification-icon">
+                    <div class="notification-content">
+                        <div class="notification-title">Incident Resolved</div>
+                        <div class="notification-text">Geo-fence breach incident #INC002 has been resolved</div>
+                        <div class="notification-time">1 hour ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Dropdown -->
+    <div id="profile-dropdown" class="dropdown-menu">
+        <div class="dropdown-item">
+            <i class="fas fa-user"></i>
+            <span>Profile Settings</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-cog"></i>
+            <span>System Settings</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Sign Out</span>
+        </div>
+    </div>
+
+    <!-- Location Selector Dropdown -->
+    <div id="location-dropdown" class="dropdown-menu">
+        <div class="dropdown-header">
+            <h3>Select Location</h3>
+        </div>
+        <div class="dropdown-item active">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>Mumbai, India</span>
+            <i class="fas fa-check" style="margin-left: auto;"></i>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>Delhi, India</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>Goa, India</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>Kerala, India</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item">
+            <i class="fas fa-plus"></i>
+            <span>Add New Location</span>
+        </div>
+    </div>
+
+    <!-- Time Range Dropdown -->
+    <div id="timerange-dropdown" class="dropdown-menu">
+        <div class="dropdown-header">
+            <h3>Time Range</h3>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-clock"></i>
+            <span>Last 1 hour</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-clock"></i>
+            <span>Last 6 hours</span>
+        </div>
+        <div class="dropdown-item active">
+            <i class="fas fa-clock"></i>
+            <span>Last 24 hours</span>
+            <i class="fas fa-check" style="margin-left: auto;"></i>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-clock"></i>
+            <span>Last 7 days</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-clock"></i>
+            <span>Last 30 days</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Custom Range</span>
+        </div>
+    </div>
+
+    <!-- Export Menu Dropdown -->
+    <div id="export-dropdown" class="dropdown-menu">
+        <div class="dropdown-header">
+            <h3>Export Data</h3>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-file-csv"></i>
+            <span>Export as CSV</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-file-excel"></i>
+            <span>Export as Excel</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-file-pdf"></i>
+            <span>Export as PDF Report</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-database"></i>
+            <span>Export Database Backup</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item">
+            <i class="fas fa-cog"></i>
+            <span>Export Settings</span>
+        </div>
+    </div>
+
+    <!-- System Status Dropdown -->
+    <div id="system-status-dropdown" class="dropdown-menu">
+        <div class="dropdown-header">
+            <h3>System Status</h3>
+        </div>
+        <div class="status-item">
+            <div class="status-row">
+                <span>API Server</span>
+                <div class="status-indicator online"></div>
+                <span class="status-text">Online</span>
+            </div>
+        </div>
+        <div class="status-item">
+            <div class="status-row">
+                <span>Database</span>
+                <div class="status-indicator online"></div>
+                <span class="status-text">Connected</span>
+            </div>
+        </div>
+        <div class="status-item">
+            <div class="status-row">
+                <span>IoT Network</span>
+                <div class="status-indicator warning"></div>
+                <span class="status-text">Partial</span>
+            </div>
+        </div>
+        <div class="status-item">
+            <div class="status-row">
+                <span>Emergency Services</span>
+                <div class="status-indicator online"></div>
+                <span class="status-text">Available</span>
+            </div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item">
+            <i class="fas fa-chart-line"></i>
+            <span>View System Health</span>
+        </div>
+    </div>
+
+    <!-- Language Selector Dropdown -->
+    <div id="language-dropdown" class="dropdown-menu">
+        <div class="dropdown-header">
+            <h3>Language</h3>
+        </div>
+        <div class="dropdown-item active">
+            <i class="fas fa-flag-usa"></i>
+            <span>English (EN)</span>
+            <i class="fas fa-check" style="margin-left: auto;"></i>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-flag"></i>
+            <span>हिंदी (HI)</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-flag"></i>
+            <span>मराठी (MR)</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-flag"></i>
+            <span>ગુજરાતી (GU)</span>
+        </div>
+    </div>
+
+    <!-- Help Menu Dropdown -->
+    <div id="help-dropdown" class="dropdown-menu">
+        <div class="dropdown-header">
+            <h3>Help & Support</h3>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-book"></i>
+            <span>User Guide</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-video"></i>
+            <span>Video Tutorials</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-keyboard"></i>
+            <span>Keyboard Shortcuts</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-question-circle"></i>
+            <span>FAQ</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item">
+            <i class="fas fa-headset"></i>
+            <span>Contact Support</span>
+        </div>
+        <div class="dropdown-item">
+            <i class="fas fa-bug"></i>
+            <span>Report Issue</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item">
+            <i class="fas fa-info-circle"></i>
+            <span>About RAAHI v2.1.0</span>
+        </div>
+    </div>
+
+    <script src="scripts/dashboard.js"></script>
+</body>
+</html>

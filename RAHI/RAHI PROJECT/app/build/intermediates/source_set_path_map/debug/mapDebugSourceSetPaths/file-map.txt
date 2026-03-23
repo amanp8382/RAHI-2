@@ -1,0 +1,64 @@
+com.example.rahi2.app-pngs-0 C:\SOFTWARE DEVELOPMENT\PROJECTS\rahinew\RAHI\RAHI PROJECT\app\build\generated\res\pngs\debug
+com.example.rahi2.app-resValues-1 C:\SOFTWARE DEVELOPMENT\PROJECTS\rahinew\RAHI\RAHI PROJECT\app\build\generated\res\resValues\debug
+com.example.rahi2.app-updated_navigation_xml-2 C:\SOFTWARE DEVELOPMENT\PROJECTS\rahinew\RAHI\RAHI PROJECT\app\build\generated\updated_navigation_xml\debug
+com.example.rahi2.app-packageDebugResources-3 C:\SOFTWARE DEVELOPMENT\PROJECTS\rahinew\RAHI\RAHI PROJECT\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.example.rahi2.app-packageDebugResources-4 C:\SOFTWARE DEVELOPMENT\PROJECTS\rahinew\RAHI\RAHI PROJECT\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.example.rahi2.app-debug-5 C:\SOFTWARE DEVELOPMENT\PROJECTS\rahinew\RAHI\RAHI PROJECT\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.example.rahi2.app-debug-6 C:\SOFTWARE DEVELOPMENT\PROJECTS\rahinew\RAHI\RAHI PROJECT\app\src\debug\res
+com.example.rahi2.app-main-7 C:\SOFTWARE DEVELOPMENT\PROJECTS\rahinew\RAHI\RAHI PROJECT\app\src\main\res
+com.example.rahi2.app-play-services-base-18.5.0-8 C:\Users\yups1\.gradle\caches\8.13\transforms\07f5e61d6e72e54fff1018dd630ea887\transformed\play-services-base-18.5.0\res
+com.example.rahi2.app-lifecycle-viewmodel-savedstate-release-9 C:\Users\yups1\.gradle\caches\8.13\transforms\0af8683cf71ebcdb176123048e53e5d0\transformed\lifecycle-viewmodel-savedstate-release\res
+com.example.rahi2.app-lifecycle-viewmodel-ktx-2.9.0-10 C:\Users\yups1\.gradle\caches\8.13\transforms\12ca00c0089887a4a73952beea87bbec\transformed\lifecycle-viewmodel-ktx-2.9.0\res
+com.example.rahi2.app-recyclerview-1.1.0-11 C:\Users\yups1\.gradle\caches\8.13\transforms\1391665277fbda937b4d1d372d349a34\transformed\recyclerview-1.1.0\res
+com.example.rahi2.app-profileinstaller-1.4.0-12 C:\Users\yups1\.gradle\caches\8.13\transforms\153cf6cd0cf1f88d2e351efd000a2b7a\transformed\profileinstaller-1.4.0\res
+com.example.rahi2.app-navigation-common-ktx-2.8.3-13 C:\Users\yups1\.gradle\caches\8.13\transforms\1724ac799532e3fb3e23decb8cbce0af\transformed\navigation-common-ktx-2.8.3\res
+com.example.rahi2.app-lifecycle-livedata-2.9.0-14 C:\Users\yups1\.gradle\caches\8.13\transforms\3a1289126b658ab751eb373898025f26\transformed\lifecycle-livedata-2.9.0\res
+com.example.rahi2.app-customview-poolingcontainer-1.0.0-15 C:\Users\yups1\.gradle\caches\8.13\transforms\46904270637cbb3c6990ecbc08e86dcb\transformed\customview-poolingcontainer-1.0.0\res
+com.example.rahi2.app-material3-release-16 C:\Users\yups1\.gradle\caches\8.13\transforms\4b029a9129f6fa4571a8b0b4ec0c76de\transformed\material3-release\res
+com.example.rahi2.app-core-runtime-2.2.0-17 C:\Users\yups1\.gradle\caches\8.13\transforms\4d18a47238950d3e590f188b8b340294\transformed\core-runtime-2.2.0\res
+com.example.rahi2.app-lifecycle-runtime-compose-release-18 C:\Users\yups1\.gradle\caches\8.13\transforms\51998c51af44d1135815deabe20dd606\transformed\lifecycle-runtime-compose-release\res
+com.example.rahi2.app-appcompat-1.6.1-19 C:\Users\yups1\.gradle\caches\8.13\transforms\585c66f3215c995361e90ccceb6893e9\transformed\appcompat-1.6.1\res
+com.example.rahi2.app-startup-runtime-1.1.1-20 C:\Users\yups1\.gradle\caches\8.13\transforms\587ff2f571ee03b0304a4291b6460dc1\transformed\startup-runtime-1.1.1\res
+com.example.rahi2.app-coordinatorlayout-1.1.0-21 C:\Users\yups1\.gradle\caches\8.13\transforms\596182a4539fbb9c915a3d44f7e6c77f\transformed\coordinatorlayout-1.1.0\res
+com.example.rahi2.app-appcompat-resources-1.6.1-22 C:\Users\yups1\.gradle\caches\8.13\transforms\59837f2b92d3a98c816133559d259d44\transformed\appcompat-resources-1.6.1\res
+com.example.rahi2.app-savedstate-ktx-1.3.0-23 C:\Users\yups1\.gradle\caches\8.13\transforms\5a0c5f00119c2819608c33d7c55f317e\transformed\savedstate-ktx-1.3.0\res
+com.example.rahi2.app-annotation-experimental-1.4.1-24 C:\Users\yups1\.gradle\caches\8.13\transforms\6453225db2f580dd6cb96ad2e74c0435\transformed\annotation-experimental-1.4.1\res
+com.example.rahi2.app-fragment-1.3.6-25 C:\Users\yups1\.gradle\caches\8.13\transforms\6668bd2bcb9d55363548aa5768599300\transformed\fragment-1.3.6\res
+com.example.rahi2.app-ui-release-26 C:\Users\yups1\.gradle\caches\8.13\transforms\6a0525594b4e25814ea51f3ad0e77165\transformed\ui-release\res
+com.example.rahi2.app-tracing-1.2.0-27 C:\Users\yups1\.gradle\caches\8.13\transforms\6bc2e89269ba0cfbc9e5dbdd8bb17ae7\transformed\tracing-1.2.0\res
+com.example.rahi2.app-core-1.17.0-28 C:\Users\yups1\.gradle\caches\8.13\transforms\6c4922c5bd16b6c29d470f17acf4f91f\transformed\core-1.17.0\res
+com.example.rahi2.app-material-29 C:\Users\yups1\.gradle\caches\8.13\transforms\6fb51a3e103968d41cd95d20772506ec\transformed\material\res
+com.example.rahi2.app-lifecycle-process-2.9.0-30 C:\Users\yups1\.gradle\caches\8.13\transforms\71d0d3802b7868af9ae909cdc87729c0\transformed\lifecycle-process-2.9.0\res
+com.example.rahi2.app-navigation-common-2.8.3-31 C:\Users\yups1\.gradle\caches\8.13\transforms\72bed3f41b6748a252af1cf9ddd27274\transformed\navigation-common-2.8.3\res
+com.example.rahi2.app-transition-1.2.0-32 C:\Users\yups1\.gradle\caches\8.13\transforms\77930a160b8ac6066450daf0c35a7fa3\transformed\transition-1.2.0\res
+com.example.rahi2.app-activity-ktx-1.11.0-33 C:\Users\yups1\.gradle\caches\8.13\transforms\77e812f67c3264dc1913534b9c494bf4\transformed\activity-ktx-1.11.0\res
+com.example.rahi2.app-navigation-runtime-2.8.3-34 C:\Users\yups1\.gradle\caches\8.13\transforms\82ba721f9a5d5d553915f0bd75440fe5\transformed\navigation-runtime-2.8.3\res
+com.example.rahi2.app-activity-1.11.0-35 C:\Users\yups1\.gradle\caches\8.13\transforms\86dddf270e91529bfb9a1f61db778ecb\transformed\activity-1.11.0\res
+com.example.rahi2.app-maps-compose-6.10.0-36 C:\Users\yups1\.gradle\caches\8.13\transforms\880b6c4e3d75a24fe807bbf47fc988c5\transformed\maps-compose-6.10.0\res
+com.example.rahi2.app-material-icons-extended-release-37 C:\Users\yups1\.gradle\caches\8.13\transforms\8826aeb7053a28ed6677bf7f931b7662\transformed\material-icons-extended-release\res
+com.example.rahi2.app-lifecycle-viewmodel-compose-release-38 C:\Users\yups1\.gradle\caches\8.13\transforms\8fc875d6686371c0ec2bcdb5c5ae90d2\transformed\lifecycle-viewmodel-compose-release\res
+com.example.rahi2.app-emoji2-views-helper-1.4.0-39 C:\Users\yups1\.gradle\caches\8.13\transforms\a25332f5b209c2fadd65a6f32ff4a2ad\transformed\emoji2-views-helper-1.4.0\res
+com.example.rahi2.app-viewpager2-1.0.0-40 C:\Users\yups1\.gradle\caches\8.13\transforms\a3e0a2759a414fa47603ce4890fbe776\transformed\viewpager2-1.0.0\res
+com.example.rahi2.app-cardview-1.0.0-41 C:\Users\yups1\.gradle\caches\8.13\transforms\a401919a62a4da1ad7671c704379470d\transformed\cardview-1.0.0\res
+com.example.rahi2.app-core-viewtree-1.0.0-42 C:\Users\yups1\.gradle\caches\8.13\transforms\aa643cb52e5a9941974d550e9674aad5\transformed\core-viewtree-1.0.0\res
+com.example.rahi2.app-material-icons-core-release-43 C:\Users\yups1\.gradle\caches\8.13\transforms\aaaa345c40ba585cd7c7393714c82c40\transformed\material-icons-core-release\res
+com.example.rahi2.app-lifecycle-livedata-core-2.9.0-44 C:\Users\yups1\.gradle\caches\8.13\transforms\b151f841c3f6e1c0115d17efa1613023\transformed\lifecycle-livedata-core-2.9.0\res
+com.example.rahi2.app-ui-graphics-release-45 C:\Users\yups1\.gradle\caches\8.13\transforms\b85a4e271bbdc278bfdc1fde9758d343\transformed\ui-graphics-release\res
+com.example.rahi2.app-activity-compose-1.11.0-46 C:\Users\yups1\.gradle\caches\8.13\transforms\c35dab9a7000c1b5127fa2ee670c18ba\transformed\activity-compose-1.11.0\res
+com.example.rahi2.app-savedstate-release-47 C:\Users\yups1\.gradle\caches\8.13\transforms\c6390f59f91807299243351151d3b1db\transformed\savedstate-release\res
+com.example.rahi2.app-navigation-compose-2.8.3-48 C:\Users\yups1\.gradle\caches\8.13\transforms\c7fadf15f320a45dd7ab597c7455f8f2\transformed\navigation-compose-2.8.3\res
+com.example.rahi2.app-lifecycle-viewmodel-release-49 C:\Users\yups1\.gradle\caches\8.13\transforms\c9777d9f5dbee31d88eff0fec30a5e44\transformed\lifecycle-viewmodel-release\res
+com.example.rahi2.app-ui-test-manifest-1.9.0-50 C:\Users\yups1\.gradle\caches\8.13\transforms\cab6930fc12f33ef72b5e65415b3656f\transformed\ui-test-manifest-1.9.0\res
+com.example.rahi2.app-play-services-basement-18.4.0-51 C:\Users\yups1\.gradle\caches\8.13\transforms\cbc2bf7aad2fc456f85d22e337acaccc\transformed\play-services-basement-18.4.0\res
+com.example.rahi2.app-navigation-runtime-ktx-2.8.3-52 C:\Users\yups1\.gradle\caches\8.13\transforms\ce3ce4578d9349155c2e33944c887b46\transformed\navigation-runtime-ktx-2.8.3\res
+com.example.rahi2.app-savedstate-compose-release-53 C:\Users\yups1\.gradle\caches\8.13\transforms\d078f71159e5c2c3ad520b56030369b5\transformed\savedstate-compose-release\res
+com.example.rahi2.app-lifecycle-runtime-release-54 C:\Users\yups1\.gradle\caches\8.13\transforms\d102e0a02eab9856ee601be7aa806c5e\transformed\lifecycle-runtime-release\res
+com.example.rahi2.app-foundation-release-55 C:\Users\yups1\.gradle\caches\8.13\transforms\d1270c7ea71951f1bfbc0d6bc82af903\transformed\foundation-release\res
+com.example.rahi2.app-emoji2-1.4.0-56 C:\Users\yups1\.gradle\caches\8.13\transforms\d22e3e252d39c9e0a9d379f82589985b\transformed\emoji2-1.4.0\res
+com.example.rahi2.app-core-ktx-1.17.0-57 C:\Users\yups1\.gradle\caches\8.13\transforms\d231615d189584e9434c9a64d5e75063\transformed\core-ktx-1.17.0\res
+com.example.rahi2.app-drawerlayout-1.1.1-58 C:\Users\yups1\.gradle\caches\8.13\transforms\d3ba375b628db44cbadb34ca4148de98\transformed\drawerlayout-1.1.1\res
+com.example.rahi2.app-play-services-maps-19.2.0-59 C:\Users\yups1\.gradle\caches\8.13\transforms\e9390a33d4312c8c48b5c850bf390563\transformed\play-services-maps-19.2.0\res
+com.example.rahi2.app-material-1.10.0-60 C:\Users\yups1\.gradle\caches\8.13\transforms\ee6635d43a8be6f46a84372b04f156b9\transformed\material-1.10.0\res
+com.example.rahi2.app-constraintlayout-2.1.4-61 C:\Users\yups1\.gradle\caches\8.13\transforms\ef2f412f3436456242ad0973ccc8c335\transformed\constraintlayout-2.1.4\res
+com.example.rahi2.app-lifecycle-livedata-core-ktx-2.9.0-62 C:\Users\yups1\.gradle\caches\8.13\transforms\f93b97fcab7fa19c28a513c39a3016e4\transformed\lifecycle-livedata-core-ktx-2.9.0\res
+com.example.rahi2.app-graphics-path-1.0.1-63 C:\Users\yups1\.gradle\caches\8.13\transforms\faa53c57a4d87c1e336832268796ad97\transformed\graphics-path-1.0.1\res
