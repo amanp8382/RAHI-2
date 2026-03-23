@@ -1,20 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import EmergencyDashboard from './EmergencyDashboard';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { getAllTravelerRecords } from '../utils/travelerLedger';
+import EmergencyDashboard from './EmergencyDashboard';
 import '../styles/auth.css';
 
-const ADMIN_SESSION_KEY = 'raahi_admin_session_v1';
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'admin123';
-
-const Admin = () => {
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
-  const [error, setError] = useState('');
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(localStorage.getItem(ADMIN_SESSION_KEY) === 'true');
-  const [activeTab, setActiveTab] = useState('users');
+const PoliceDashboard = () => {
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('travelers');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const travelerRecords = useMemo(() => getAllTravelerRecords(), [isAdminLoggedIn]);
+  const travelerRecords = useMemo(() => getAllTravelerRecords(), [user]);
 
   const filteredTravelers = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -29,108 +26,47 @@ const Admin = () => {
     ));
   }, [searchTerm, travelerRecords]);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setCredentials((prev) => ({ ...prev, [name]: value }));
-    setError('');
-  };
-
-  const handleLogin = (event) => {
-    event.preventDefault();
-
-    if (
-      credentials.username.trim().toLowerCase() === ADMIN_USERNAME &&
-      credentials.password === ADMIN_PASSWORD
-    ) {
-      localStorage.setItem(ADMIN_SESSION_KEY, 'true');
-      setIsAdminLoggedIn(true);
-      setError('');
-      return;
-    }
-
-    setError('Invalid admin credentials. Use admin / admin123.');
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem(ADMIN_SESSION_KEY);
-    setIsAdminLoggedIn(false);
-    setCredentials({ username: '', password: '' });
-    setActiveTab('users');
-  };
-
-  if (!isAdminLoggedIn) {
-    return (
-      <div className="auth-page">
-        <div className="auth-card auth-card-wide">
-          <div className="auth-copy">
-            <p className="auth-eyebrow">RAAHI Admin</p>
-            <h1>Administrator Portal</h1>
-            <p className="auth-subtitle">Access traveler records, review public QR data, and monitor emergency activity from one admin workspace.</p>
-            <div className="auth-tip-list">
-              <div>Traveler information overview</div>
-              <div>Emergency dashboard access</div>
-              <div>Separate admin login</div>
-            </div>
-          </div>
-
-          <form className="auth-form" onSubmit={handleLogin}>
-            <div className="auth-form-header">
-              <h2>Admin Login</h2>
-              <p>Demo credentials are enabled for local testing.</p>
-            </div>
-
-            {error && (
-              <div className="auth-alert auth-alert-error">
-                <p>{error}</p>
-              </div>
-            )}
-
-            <div className="auth-field">
-              <label htmlFor="admin-username">Username</label>
-              <input id="admin-username" name="username" value={credentials.username} onChange={handleChange} />
-            </div>
-
-            <div className="auth-field">
-              <label htmlFor="admin-password">Password</label>
-              <input id="admin-password" name="password" type="password" value={credentials.password} onChange={handleChange} />
-            </div>
-
-            <button type="submit" className="auth-submit">Open admin panel</button>
-            <p className="auth-subtext">Demo: `admin` / `admin123`</p>
-          </form>
-        </div>
-      </div>
-    );
+  if (!isLoading && !isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
+
+  if (!isLoading && user?.userType !== 'police') {
+    return <Navigate to="/login" replace />;
+  }
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <div className="auth-page admin-shell-page">
       <div className="admin-portal">
         <div className="admin-portal-header">
           <div>
-            <p className="auth-eyebrow">RAAHI Admin</p>
-            <h1>Control Center</h1>
-            <p>Manage traveler records and emergency operations from one page.</p>
+            <p className="auth-eyebrow">RAAHI Police</p>
+            <h1>{user?.stationName || 'Police Dashboard'}</h1>
+            <p>Police access with registered traveler information and the emergency dashboard.</p>
           </div>
           <button type="button" className="auth-submit secondary" onClick={handleLogout}>Logout</button>
         </div>
 
         <div className="admin-tabs">
-          <button type="button" className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Traveler Information</button>
+          <button type="button" className={`admin-tab ${activeTab === 'travelers' ? 'active' : ''}`} onClick={() => setActiveTab('travelers')}>Registered Travelers</button>
           <button type="button" className={`admin-tab ${activeTab === 'emergency' ? 'active' : ''}`} onClick={() => setActiveTab('emergency')}>Emergency Dashboard</button>
         </div>
 
-        {activeTab === 'users' && (
+        {activeTab === 'travelers' && (
           <div className="admin-panel">
             <div className="admin-panel-toolbar">
               <div>
-                <h2>Saved Travelers</h2>
-                <p>{travelerRecords.length} traveler records available from local saved data.</p>
+                <h2>Traveler Information</h2>
+                <p>{travelerRecords.length} registered traveler records available for police review.</p>
               </div>
               <input
                 className="admin-search-input"
                 type="text"
-                placeholder="Search by name, email, phone, traveler ID, destination..."
+                placeholder="Search by name, traveler ID, email, phone, destination..."
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
@@ -209,7 +145,7 @@ const Admin = () => {
 
             {filteredTravelers.length === 0 && (
               <div className="auth-alert auth-alert-error">
-                <p>No traveler records matched this search.</p>
+                <p>No traveler records found for this search.</p>
               </div>
             )}
           </div>
@@ -217,7 +153,7 @@ const Admin = () => {
 
         {activeTab === 'emergency' && (
           <div className="admin-panel admin-emergency-panel">
-            <EmergencyDashboard />
+            <EmergencyDashboard travelerRecords={travelerRecords} viewerLabel={user?.stationName || 'Police Unit'} />
           </div>
         )}
       </div>
@@ -225,4 +161,4 @@ const Admin = () => {
   );
 };
 
-export default Admin;
+export default PoliceDashboard;

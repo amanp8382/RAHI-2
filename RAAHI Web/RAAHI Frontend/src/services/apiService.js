@@ -1,5 +1,5 @@
 // API Service for backend communication
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 class ApiService {
   constructor() {

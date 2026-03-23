@@ -1,5 +1,5 @@
 const connectMongoDB = require('./mongodb');
-const { initializeFirebase } = require('./firebase');
+const { initializeFirebase, hasFirebaseConfig } = require('./firebase');
 
 class DatabaseManager {
   constructor() {
@@ -10,44 +10,44 @@ class DatabaseManager {
 
   async connect() {
     try {
-      console.log('🔗 Initializing database connections...');
+      console.log('Initializing database connections...');
 
-      // Connect to MongoDB
       try {
-        await connectMongoDB();
-        console.log('✅ MongoDB connection established');
+        if (process.env.MONGODB_URI && process.env.MONGODB_URI !== 'mongodb+srv://username:password@cluster.mongodb.net/database_name') {
+          await connectMongoDB();
+          console.log('MongoDB connection established');
+        } else {
+          console.log('MongoDB not configured - skipping MongoDB initialization');
+        }
       } catch (mongoError) {
-        console.warn('⚠️  MongoDB connection failed:', mongoError.message);
-        console.log('📝 Server will continue without MongoDB - please check your MongoDB connection');
+        console.warn('MongoDB connection failed:', mongoError.message);
+        console.log('Server will continue without MongoDB - please check your MongoDB connection');
       }
 
-      // Initialize Firebase (optional for now)
       try {
-        if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PROJECT_ID !== 'your-project-id') {
+        if (hasFirebaseConfig() && process.env.FIREBASE_PROJECT_ID !== 'your-project-id') {
           this.firebaseServices = initializeFirebase();
-          console.log('✅ Firebase services initialized');
+          console.log('Firebase services initialized');
         } else {
-          console.log('⚠️  Firebase not configured - skipping Firebase initialization');
+          console.log('Firebase not configured - skipping Firebase initialization');
           this.firebaseServices = null;
         }
       } catch (firebaseError) {
-        console.warn('⚠️  Firebase initialization failed:', firebaseError.message);
-        console.log('📝 Server will continue without Firebase - update .env with proper Firebase credentials');
+        console.warn('Firebase initialization failed:', firebaseError.message);
+        console.log('Server will continue without Firebase - update .env with proper Firebase credentials');
         this.firebaseServices = null;
       }
 
       this.isConnected = true;
-      console.log('🎉 Database connections established successfully');
+      console.log('Database connections established successfully');
 
       return {
         mongodb: true,
         firebase: this.firebaseServices
       };
-
     } catch (error) {
-      console.error('❌ Database connection failed:', error.message);
-      console.log('📝 Server will start without database connection. Some features may not work.');
-      // Don't throw error - allow server to start
+      console.error('Database connection failed:', error.message);
+      console.log('Server will start without database connection. Some features may not work.');
       return {
         mongodb: false,
         firebase: this.firebaseServices
@@ -66,13 +66,12 @@ class DatabaseManager {
     try {
       const mongoose = require('mongoose');
       await mongoose.connection.close();
-      console.log('🔌 MongoDB connection closed');
+      console.log('MongoDB connection closed');
 
       this.isConnected = false;
-      console.log('👋 All database connections closed');
-
+      console.log('All database connections closed');
     } catch (error) {
-      console.error('❌ Error disconnecting from databases:', error.message);
+      console.error('Error disconnecting from databases:', error.message);
       throw error;
     }
   }
@@ -93,7 +92,6 @@ class DatabaseManager {
       firebase: { status: 'disconnected', latency: null, error: null }
     };
 
-    // Test MongoDB
     if (health.mongodb) {
       try {
         const start = Date.now();
@@ -113,7 +111,6 @@ class DatabaseManager {
       }
     }
 
-    // Test Firebase
     if (health.firebase) {
       try {
         const start = Date.now();
@@ -136,6 +133,5 @@ class DatabaseManager {
   }
 }
 
-// Export singleton instance
 const databaseManager = new DatabaseManager();
 module.exports = databaseManager;

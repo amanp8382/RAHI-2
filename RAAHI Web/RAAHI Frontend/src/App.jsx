@@ -6,7 +6,8 @@ import Header from './components/Shared/Header';
 import Footer from './components/Shared/Footer';
 import Chatbot from './components/Shared/Chatbot';
 import Home from './components/Home';
-import Registration from './components/Registration';
+import Register from './Register';
+import ProfileSetup from './ProfileSetup';
 import Dashboard from './components/Dashboard';
 import Alerts from './components/Alerts';
 import Help from './components/Help';
@@ -19,7 +20,7 @@ import PanicSystemExample from './components/PanicSystemExample';
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const [isDarkTheme, setIsDarkTheme] = useState(false);
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   // Theme management and panic system initialization
   useEffect(() => {
@@ -148,11 +149,15 @@ const App = () => {
   }, []);
 
   const renderPage = () => {
+    const hasEmergencyAccess = user?.userType === 'police' || user?.userType === 'department' || user?.role === 'tourist_department';
+
     switch (currentPage) {
       case 'home':
         return <Home onPageChange={handlePageChange} />;
       case 'register':
-        return <Registration />;
+        return <Register />;
+      case 'profile-setup':
+        return <ProfileSetup />;
       case 'dashboard':
         return <Dashboard />;
       case 'alerts':
@@ -164,7 +169,7 @@ const App = () => {
       case 'login':
         return <Login />;
       case 'emergency-dashboard':
-        return <EmergencyDashboard />;
+        return hasEmergencyAccess ? <EmergencyDashboard viewerLabel={user?.stationName || user?.fullName || 'Emergency Access'} /> : <Home onPageChange={handlePageChange} />;
       case 'panic-example':
         return <PanicSystemExample />;
       default:

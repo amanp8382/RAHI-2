@@ -29,15 +29,12 @@ const getFirebaseServices = () => {
 router.post('/', authenticate, async (req, res) => {
   try {
     const {
-  
-  id: 'my-zone',
-  name: 'My Red Zone',
-  latitude: 28.472430,    // Your latitude
-  longitude: 77.488703,   // Your longitude  
-  radius: 50,          // Radius in meters
-  color: '#ff0000',     // Red color
-  isActive: true,       // Must be true to show
-  type: 'monitoring'
+      name,
+      latitude,
+      longitude,
+      radius,
+      color,
+      type,
       isActive = true
     } = req.body;
 

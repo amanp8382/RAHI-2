@@ -1,10 +1,39 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import apiService from '../services/api';
+import { issueTravelerCredential } from '../utils/travelerLedger';
 
-// Create the Auth Context
 const AuthContext = createContext();
+const LOCAL_USERS_KEY = 'raahi_local_users_v1';
+const LOCAL_TOKEN_PREFIX = 'local-auth-token-';
+const MOCK_TOKEN_PREFIX = 'mock-jwt-token-';
+const POLICE_TOKEN_PREFIX = 'police-auth-token-';
+const POLICE_ACCOUNTS = [
+  {
+    id: 'police-delhi-central',
+    pincode: '110001',
+    password: 'police123',
+    fullName: 'Delhi Police Control Room',
+    firstName: 'Delhi Police',
+    lastName: 'Control Room',
+    email: 'police.raahi@local',
+    role: 'police',
+    userType: 'police',
+    stationName: 'Connaught Place Police Station'
+  },
+  {
+    id: 'police-delhi-north',
+    pincode: '110006',
+    password: 'police123',
+    fullName: 'North Delhi Police Unit',
+    firstName: 'North Delhi',
+    lastName: 'Police',
+    email: 'north.police.raahi@local',
+    role: 'police',
+    userType: 'police',
+    stationName: 'Red Fort Police Post'
+  }
+];
 
-// Custom hook to use the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -13,13 +42,116 @@ export const useAuth = () => {
   return context;
 };
 
-// Auth Provider Component
+const normalizeUser = (userData) => {
+  if (!userData) return null;
+
+  const firstName = userData.firstName || '';
+  const lastName = userData.lastName || '';
+  const fullName = userData.fullName || `${firstName} ${lastName}`.trim() || userData.email || 'User';
+
+  return {
+    ...userData,
+    id: userData.id || userData._id || userData.uid,
+    uid: userData.uid || userData.id || userData._id,
+    firstName,
+    lastName,
+    fullName,
+    role: userData.role || 'user',
+    userType: userData.userType || (userData.role === 'tourist_department' ? 'department' : 'tourist'),
+    phone: userData.phone || '',
+    age: userData.age || '',
+    destination: userData.destination || '',
+    tripDurationDays: userData.tripDurationDays || '',
+    bloodGroup: userData.bloodGroup || '',
+    medicalConditions: userData.medicalConditions || '',
+    aadhaarNumber: userData.aadhaarNumber || '',
+    aadhaarVerified: Boolean(userData.aadhaarVerified),
+    travelPreferences: Array.isArray(userData.travelPreferences) ? userData.travelPreferences : [],
+    profilePhoto: userData.profilePhoto || null
+  };
+};
+
+const issueAndPersistUser = async (userData, token = localStorage.getItem('authToken')) => {
+  const normalized = normalizeUser(userData);
+  const credentialedUser = await issueTravelerCredential(normalized);
+  if (token) {
+    persistSession(token, credentialedUser);
+  } else {
+    localStorage.setItem('user', JSON.stringify(credentialedUser));
+  }
+  return credentialedUser;
+};
+
+const getLocalUsers = () => {
+  try {
+    const users = localStorage.getItem(LOCAL_USERS_KEY);
+    return users ? JSON.parse(users) : [];
+  } catch (error) {
+    console.error('Failed to parse local auth store:', error);
+    return [];
+  }
+};
+
+const setLocalUsers = (users) => {
+  localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+};
+
+const persistSession = (token, user) => {
+  localStorage.setItem('authToken', token);
+  localStorage.setItem('user', JSON.stringify(user));
+};
+
+const persistDirectSessionUser = (userData, token) => {
+  const normalized = normalizeUser(userData);
+  persistSession(token, normalized);
+  return normalized;
+};
+
+const persistLocalAccount = (userData, fallbackPassword = 'offline-profile') => {
+  const normalized = normalizeUser(userData);
+  const email = (normalized.email || '').trim().toLowerCase();
+  const localUsers = getLocalUsers();
+  const existingIndex = localUsers.findIndex((entry) => (
+    entry.id === normalized.id || (email && entry.email === email)
+  ));
+
+  const nextEntry = {
+    id: normalized.id,
+    email,
+    password: existingIndex >= 0 ? localUsers[existingIndex].password : fallbackPassword,
+    user: normalized
+  };
+
+  if (existingIndex >= 0) {
+    localUsers[existingIndex] = nextEntry;
+  } else {
+    localUsers.push(nextEntry);
+  }
+
+  setLocalUsers(localUsers);
+  return normalized;
+};
+
+const hasLocalFallbackSession = () => {
+  const token = localStorage.getItem('authToken') || '';
+  return (
+    token.startsWith(LOCAL_TOKEN_PREFIX) ||
+    token.startsWith(MOCK_TOKEN_PREFIX) ||
+    token.startsWith(POLICE_TOKEN_PREFIX)
+  );
+};
+
+const isOfflineFallbackError = (error) => (
+  !error.response ||
+  error.response.status >= 500 ||
+  (error.response.status === 401 && hasLocalFallbackSession())
+);
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Initialize authentication state on app load
   useEffect(() => {
     initializeAuth();
   }, []);
@@ -29,24 +161,37 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('authToken');
       const savedUser = localStorage.getItem('user');
 
-      if (token && savedUser) {
-        const userData = JSON.parse(savedUser);
-        
-        // If it's a mock token, just restore the user state
-        if (token.startsWith('mock-jwt-token-')) {
-          setUser(userData);
+      if (!token || !savedUser) {
+        return;
+      }
+
+      const userData = JSON.parse(savedUser);
+
+      if (token.startsWith(POLICE_TOKEN_PREFIX)) {
+        const normalized = normalizeUser(userData);
+        setUser(normalized);
+        setIsAuthenticated(true);
+        return;
+      }
+
+      if (token.startsWith(MOCK_TOKEN_PREFIX) || token.startsWith(LOCAL_TOKEN_PREFIX)) {
+        const normalized = await issueAndPersistUser(userData, token);
+        setUser(normalized);
+        setIsAuthenticated(true);
+        return;
+      }
+
+      try {
+        const profileData = await apiService.users.getProfile();
+        const normalized = await issueAndPersistUser(profileData, token);
+        setUser(normalized);
+        setIsAuthenticated(true);
+      } catch (error) {
+        if (isOfflineFallbackError(error)) {
+          const normalized = await issueAndPersistUser(userData, token);
+          setUser(normalized);
           setIsAuthenticated(true);
-          return;
-        }
-        
-        // For real tokens, verify with backend
-        try {
-          const profileData = await apiService.users.getProfile();
-          setUser(profileData);
-          setIsAuthenticated(true);
-        } catch (error) {
-          // Token is invalid, clear storage
-          console.warn('Token verification failed:', error.message);
+        } else {
           clearAuth();
         }
       }
@@ -58,13 +203,140 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithLocalStore = (credentials) => {
+    const localUsers = getLocalUsers();
+    const matchingUser = localUsers.find((entry) => (
+      entry.email?.toLowerCase() === credentials.email?.toLowerCase() &&
+      entry.password === credentials.password
+    ));
+
+    if (!matchingUser) {
+      return {
+        success: false,
+        error: 'No locally saved account matched these credentials.'
+      };
+    }
+
+    const normalized = normalizeUser(matchingUser.user);
+    const token = `${LOCAL_TOKEN_PREFIX}${normalized.id}`;
+    return issueAndPersistUser(normalized, token).then((credentialedUser) => {
+      setUser(credentialedUser);
+      setIsAuthenticated(true);
+
+      return {
+        success: true,
+        message: 'Logged in using locally saved data.',
+        user: credentialedUser,
+        userType: credentialedUser.userType,
+        isOfflineMode: true
+      };
+    });
+  };
+
+  const registerLocally = (userData) => {
+    const localUsers = getLocalUsers();
+    const email = userData.email.trim().toLowerCase();
+
+    if (localUsers.some((entry) => entry.email === email)) {
+      return {
+        success: false,
+        error: 'This email is already saved locally. Please log in instead.'
+      };
+    }
+
+    const normalized = normalizeUser({
+      id: `local-${Date.now()}`,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email,
+      role: 'user',
+      userType: 'tourist',
+      phone: '',
+      age: '',
+      destination: '',
+      tripDurationDays: '',
+      bloodGroup: '',
+      medicalConditions: '',
+      aadhaarNumber: '',
+      aadhaarVerified: false,
+      travelPreferences: [],
+      profilePhoto: null
+    });
+
+    localUsers.push({
+      id: normalized.id,
+      email,
+      password: userData.password,
+      user: normalized
+    });
+    setLocalUsers(localUsers);
+
+    const token = `${LOCAL_TOKEN_PREFIX}${normalized.id}`;
+    return issueAndPersistUser(normalized, token).then((credentialedUser) => {
+      setUser(credentialedUser);
+      setIsAuthenticated(true);
+
+      localUsers[localUsers.length - 1].user = credentialedUser;
+      setLocalUsers(localUsers);
+
+      return {
+        success: true,
+        user: credentialedUser,
+        message: 'Account saved locally. It will work until backend services are available.',
+        isOfflineMode: true
+      };
+    });
+  };
+
+  const updateLocalUser = (userId, updates) => {
+    const localUsers = getLocalUsers();
+    const nextUsers = localUsers.map((entry) => {
+      if (entry.id !== userId) return entry;
+      const mergedUser = normalizeUser({ ...entry.user, ...updates });
+      return { ...entry, user: mergedUser };
+    });
+    setLocalUsers(nextUsers);
+    return nextUsers.find((entry) => entry.id === userId)?.user || null;
+  };
+
   const login = async (credentials) => {
     try {
       setIsLoading(true);
-      
-      // Mock authentication for development (check for specific credentials)
+
+      if (credentials.userType === 'police') {
+        const matchingPolice = POLICE_ACCOUNTS.find((account) => (
+          account.pincode === credentials.pincode &&
+          account.password === credentials.password
+        ));
+
+        if (!matchingPolice) {
+          return {
+            success: false,
+            error: 'Invalid police pincode or password.'
+          };
+        }
+
+        const policeUser = persistDirectSessionUser(
+          {
+            ...matchingPolice,
+            pincode: matchingPolice.pincode
+          },
+          `${POLICE_TOKEN_PREFIX}${matchingPolice.id}`
+        );
+
+        setUser(policeUser);
+        setIsAuthenticated(true);
+
+        return {
+          success: true,
+          message: 'Police login successful',
+          user: policeUser,
+          userType: 'police'
+        };
+      }
+
       if (credentials.email === 'anike@example.com' && credentials.password === 'asdfghjkl') {
-        const mockUser = {
+        const mockUser = normalizeUser({
           id: '1',
           email: 'anike@example.com',
           fullName: 'Anike Kumar',
@@ -74,53 +346,54 @@ export const AuthProvider = ({ children }) => {
           touristId: 'TID-2024-001',
           userType: 'tourist',
           role: 'user'
-        };
-        
-        // Store mock token and user data
-        localStorage.setItem('authToken', 'mock-jwt-token-' + Date.now());
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        
-        setUser(mockUser);
+        });
+
+        const credentialedUser = await issueAndPersistUser(mockUser, `${MOCK_TOKEN_PREFIX}${Date.now()}`);
+        persistLocalAccount(credentialedUser, credentials.password);
+        setUser(credentialedUser);
         setIsAuthenticated(true);
-        
-        return { success: true, message: 'Login successful' };
+
+        return { success: true, message: 'Login successful', user: credentialedUser, userType: credentialedUser.userType };
       }
-      
-      // If not using mock credentials, try backend authentication
+
       try {
-        const response = await apiService.auth.login(credentials);
-        
-        if (response.success && response.token) {
-          // Store backend JWT token and user data
-          localStorage.setItem('authToken', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-          
-          setUser(response.user);
-          setIsAuthenticated(true);
-          
-          return { success: true, message: response.message || 'Login successful' };
-        } else {
+        const response = credentials.userType === 'department'
+          ? await apiService.auth.touristDepartmentLogin({
+              state: credentials.state,
+              password: credentials.password
+            })
+          : await apiService.auth.login({
+              email: credentials.email,
+              password: credentials.password
+            });
+
+        if (!response.success || !response.token) {
           return { success: false, error: response.message || 'Login failed', action: response.action };
         }
-      } catch (apiError) {
-        console.warn('Backend authentication failed:', apiError.message);
-        
-        // Extract specific error message from backend response
-        const errorData = apiError.response?.data;
-        if (errorData) {
-          return { 
-            success: false, 
-            error: errorData.message || 'Authentication failed',
-            action: errorData.action
+
+        const normalized = await issueAndPersistUser(response.user, response.token);
+        persistLocalAccount(normalized, credentials.password);
+        setUser(normalized);
+        setIsAuthenticated(true);
+
+        return {
+          success: true,
+          message: response.message || 'Login successful',
+          user: normalized,
+          userType: normalized.userType
+        };
+      } catch (error) {
+        if (!isOfflineFallbackError(error) || credentials.userType === 'department') {
+          const errorData = error.response?.data;
+          return {
+            success: false,
+            error: errorData?.message || errorData?.error || 'Connection failed. Please check your internet connection.',
+            details: errorData?.details || []
           };
         }
-        
-        return { success: false, error: 'Connection failed. Please check your internet connection.' };
+
+        return loginWithLocalStore(credentials);
       }
-      
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'Login failed' };
     } finally {
       setIsLoading(false);
     }
@@ -129,69 +402,102 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       setIsLoading(true);
-      
-      const { fullName, touristData, ...otherData } = userData;
-      
-      // Parse fullName into firstName and lastName
-      const nameParts = fullName.split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-      
-      // Prepare data according to backend User model structure
-      const backendData = {
-        email: userData.email,
-        password: userData.password,
-        firstName,
-        lastName,
-        phone: userData.phone
-      };
 
-      // Add location if provided in tourist data
-      if (touristData && touristData.nationality) {
-        backendData.location = {
-          country: touristData.nationality
-        };
-      }
-      
-      // Register with backend
-      const response = await apiService.auth.register(backendData);
-      
-      if (response.success) {
-        console.log('✅ Registration successful');
-        
-        // Auto-login after successful registration
-        if (response.token) {
-          localStorage.setItem('authToken', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-          setUser(response.user);
-          setIsAuthenticated(true);
+      try {
+        const response = await apiService.auth.register(userData);
+
+        if (!response.success || !response.token) {
+          return {
+            success: false,
+            error: response.message || response.error || 'Registration failed',
+            details: response.details || []
+          };
         }
-        
-        return { 
-          success: true, 
-          user: response.user, 
-          message: response.message || 'Registration successful',
-          requiresVerification: !response.user.isEmailVerified
+
+        const normalized = await issueAndPersistUser(response.user, response.token);
+        persistLocalAccount(normalized, userData.password);
+        setUser(normalized);
+        setIsAuthenticated(true);
+
+        return {
+          success: true,
+          user: normalized,
+          message: response.message || 'Registration successful'
         };
-      } else {
-        throw new Error(response.error || 'Registration failed');
+      } catch (error) {
+        if (!isOfflineFallbackError(error)) {
+          const errorData = error.response?.data;
+          return {
+            success: false,
+            error: errorData?.message || errorData?.error || 'Registration failed',
+            details: errorData?.details || []
+          };
+        }
+
+        return registerLocally(userData);
       }
-      
-    } catch (error) {
-      console.error('Registration error:', error);
-      
-      // Extract specific error message from backend response
-      const errorData = error.response?.data;
-      if (errorData) {
-        return { 
-          success: false, 
-          error: errorData.message || 'Registration failed',
-          action: errorData.action
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const completeProfile = async (profileData) => {
+    try {
+      setIsLoading(true);
+
+      try {
+        const response = await apiService.users.updateProfile(profileData);
+
+        if (!response.success) {
+          return {
+            success: false,
+            error: response.message || 'Profile update failed',
+            details: response.details || []
+          };
+        }
+
+        const normalized = await issueAndPersistUser({
+          ...user,
+          ...profileData,
+          ...response.user
+        });
+        persistLocalAccount(normalized);
+        setUser(normalized);
+
+        const token = localStorage.getItem('authToken');
+        if (token?.startsWith(LOCAL_TOKEN_PREFIX)) {
+          updateLocalUser(normalized.id, normalized);
+        }
+
+        return {
+          success: true,
+          user: normalized,
+          message: response.message || 'Profile updated successfully'
+        };
+      } catch (error) {
+        if (!isOfflineFallbackError(error)) {
+          const errorData = error.response?.data;
+          return {
+            success: false,
+            error: errorData?.message || errorData?.error || 'Profile update failed',
+            details: errorData?.details || []
+          };
+        }
+
+        const currentUser = await issueAndPersistUser({ ...user, ...profileData });
+        const localUser = persistLocalAccount(currentUser);
+        const localToken = `${LOCAL_TOKEN_PREFIX}${localUser.id}`;
+        persistSession(localToken, localUser);
+        setUser(localUser);
+        setIsAuthenticated(true);
+
+        return {
+          success: true,
+          user: localUser,
+          message: 'Profile saved locally. Changes will remain available until backend services return.',
+          isOfflineMode: true
         };
       }
-      
-      const errorMessage = error.message || 'Registration failed';
-      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
@@ -199,20 +505,20 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Call backend logout endpoint
-      try {
-        await apiService.auth.logout();
-      } catch (error) {
-        console.error('Backend logout error:', error);
-        // Continue with logout even if backend call fails
+      const token = localStorage.getItem('authToken');
+      if (
+        token &&
+        !token.startsWith(LOCAL_TOKEN_PREFIX) &&
+        !token.startsWith(MOCK_TOKEN_PREFIX) &&
+        !token.startsWith(POLICE_TOKEN_PREFIX)
+      ) {
+        try {
+          await apiService.auth.logout();
+        } catch (error) {
+          console.error('Backend logout error:', error);
+        }
       }
-      
-      // Clear local auth state
-      clearAuth();
-      
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force clear auth state
+    } finally {
       clearAuth();
     }
   };
@@ -225,64 +531,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-  };
-
-  const refreshToken = async () => {
-    try {
-      const response = await apiService.auth.refreshToken();
-      if (response.token) {
-        localStorage.setItem('authToken', response.token);
-        return true;
+    issueAndPersistUser(userData).then((normalized) => {
+      setUser(normalized);
+      const token = localStorage.getItem('authToken');
+      if (token?.startsWith(LOCAL_TOKEN_PREFIX)) {
+        updateLocalUser(normalized.id, normalized);
       }
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      clearAuth();
-      return false;
-    }
+    });
   };
 
-  const forgotPassword = async (email) => {
-    try {
-      setIsLoading(true);
-      const response = await apiService.auth.forgotPassword(email);
-      return { success: true, message: response.message || 'Password reset email sent' };
-    } catch (error) {
-      console.error('Forgot password error:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Password reset failed';
-      return { success: false, error: errorMessage };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetPassword = async (token, newPassword) => {
-    try {
-      setIsLoading(true);
-      const response = await apiService.auth.resetPassword(token, newPassword);
-      return { success: true, message: response.message || 'Password reset successful' };
-    } catch (error) {
-      console.error('Reset password error:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Password reset failed';
-      return { success: false, error: errorMessage };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Context value
   const value = {
     user,
     isAuthenticated,
     isLoading,
     login,
     register,
+    completeProfile,
     logout,
     updateUser,
-    refreshToken,
-    forgotPassword,
-    resetPassword,
     clearAuth
   };
 

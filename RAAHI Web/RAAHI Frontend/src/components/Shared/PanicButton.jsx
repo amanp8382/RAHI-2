@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { db } from '../../firebase-config'; // Assuming you have this file
+import { db } from '../../firebase';
 import { doc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const PanicButton = () => {
@@ -104,7 +104,7 @@ const PanicButton = () => {
       console.log(`✅ Location acquired: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
       
       // Store the alert in Firebase Firestore
-      const userId = user.uid; // Get the user's UID from the auth context
+      const userId = user.uid || user.id; // Get the user's UID from the auth context
       const userDocRef = doc(db, "users", userId);
       const panicAlertsCollectionRef = collection(userDocRef, "panic_alerts");
       
@@ -168,7 +168,7 @@ const PanicButton = () => {
           aria-label="Emergency panic button"
           disabled={isTriggering || isWarning}
           style={{ 
-            backgroundColor: hasTriggering ? '#28a745' : isWarning ? '#ffa500' : '#dc3545',
+            backgroundColor: hasTriggered ? '#28a745' : isWarning ? '#ffa500' : '#dc3545',
             opacity: isTriggering ? 0.7 : 1,
             cursor: (isTriggering || isWarning) ? 'not-allowed' : 'pointer',
             transform: isWarning ? 'scale(1.1)' : 'scale(1)',

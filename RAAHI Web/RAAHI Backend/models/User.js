@@ -1,6 +1,21 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const profilePhotoSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    default: null
+  },
+  type: {
+    type: String,
+    default: null
+  },
+  dataUrl: {
+    type: String,
+    default: null
+  }
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -24,16 +39,27 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters long'],
-    select: false // Don’t return password in queries by default
+    select: false
   },
-  phone: String,
+  phone: {
+    type: String,
+    trim: true,
+    default: null
+  },
   role: {
     type: String,
     enum: ['user', 'admin', 'tourist_department'],
     default: 'user'
   },
   firebaseUid: String,
-  travelPreferences: [String],
+  travelPreferences: {
+    type: [String],
+    default: []
+  },
+  profilePhoto: {
+    type: profilePhotoSchema,
+    default: () => ({})
+  },
   location: {
     type: String,
     default: null
@@ -46,12 +72,9 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  lastLogin: Date,
+  lastLogin: Date
 }, { timestamps: true });
 
-/**
- * 🔑 Pre-save middleware for password hashing
- */
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
@@ -64,11 +87,8 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-/**
- * 🔑 Compare password method
- */
 userSchema.methods.correctPassword = async function (candidatePassword, userPassword) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+  return bcrypt.compare(candidatePassword, userPassword);
 };
 
 module.exports = mongoose.model('User', userSchema);

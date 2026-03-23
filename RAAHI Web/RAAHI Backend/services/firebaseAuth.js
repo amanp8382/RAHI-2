@@ -1,17 +1,20 @@
 const { initializeFirebase } = require('../config/firebase');
 
-// Get Firebase Admin services
-const { auth } = initializeFirebase();
+const getAuth = () => {
+  const { auth } = initializeFirebase();
+  return auth;
+};
 
-// Register user using Firebase Admin SDK
 const registerUser = async (email, password) => {
   try {
+    const auth = getAuth();
     const userRecord = await auth.createUser({
-      email: email,
-      password: password,
+      email,
+      password,
       emailVerified: false
     });
-    console.log("User registered:", userRecord.uid);
+
+    console.log('User registered:', userRecord.uid);
     return {
       uid: userRecord.uid,
       email: userRecord.email,
@@ -19,30 +22,30 @@ const registerUser = async (email, password) => {
       creationTime: userRecord.metadata.creationTime
     };
   } catch (error) {
-    console.error("Error registering user:", error.message);
+    console.error('Error registering user:', error.message);
     throw error;
   }
 };
 
-// Verify Firebase ID token
 const verifyToken = async (idToken) => {
   try {
+    const auth = getAuth();
     const decodedToken = await auth.verifyIdToken(idToken);
     return decodedToken;
   } catch (error) {
-    console.error("Error verifying token:", error.message);
+    console.error('Error verifying token:', error.message);
     throw error;
   }
 };
 
-// Delete user by UID
 const deleteUser = async (uid) => {
   try {
+    const auth = getAuth();
     await auth.deleteUser(uid);
-    console.log("User deleted:", uid);
+    console.log('User deleted:', uid);
     return { success: true, uid };
   } catch (error) {
-    console.error("Error deleting user:", error.message);
+    console.error('Error deleting user:', error.message);
     throw error;
   }
 };

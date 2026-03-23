@@ -166,6 +166,26 @@ html, body {
   font-size: 0.875rem;
 }
 
+.header-buttons,
+.mobile-header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.header-user-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  background-color: var(--muted);
+  color: var(--foreground);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 /* Mobile menu */
 .mobile-menu-toggle {
   display: inline-flex;
