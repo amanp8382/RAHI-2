@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const aiService = require('../services/aiService');
+const mlSafetyService = require('../services/mlSafetyService');
 const { body, validationResult } = require('express-validator');
 
 // Validation middleware
@@ -20,6 +21,20 @@ const validateSafetyLocation = [
     .withMessage('Location is required')
     .isLength({ max: 100 })
     .withMessage('Location name must be less than 100 characters'),
+];
+
+const validateLiveSafetyScore = [
+  body('lat')
+    .isFloat({ min: -90, max: 90 })
+    .withMessage('Latitude must be between -90 and 90'),
+  body('lng')
+    .isFloat({ min: -180, max: 180 })
+    .withMessage('Longitude must be between -180 and 180'),
+  body('locationName')
+    .optional()
+    .isString()
+    .isLength({ max: 150 })
+    .withMessage('Location name must be less than 150 characters')
 ];
 
 // Handle validation errors
@@ -135,6 +150,31 @@ router.post('/risk-analysis', async (req, res) => {
   }
 });
 
+router.post('/live-safety-score', validateLiveSafetyScore, handleValidationErrors, async (req, res) => {
+  try {
+    const { lat, lng, locationName = '' } = req.body;
+    const prediction = await mlSafetyService.runMlSafetyScore({ lat, lng, locationName });
+
+    res.json({
+      success: true,
+      location: {
+        lat,
+        lng,
+        locationName
+      },
+      prediction,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Live safety score endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Unable to generate safety score from the ML model',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // Emergency assistance endpoint
 router.post('/emergency-assistance', async (req, res) => {
   try {
@@ -227,6 +267,7 @@ router.get('/recommendations', (req, res) => {
       chatbot: 'POST /ai/chatbot',
       safetyRecommendations: 'POST /ai/safety-recommendations',
       riskAnalysis: 'POST /ai/risk-analysis',
+      liveSafetyScore: 'POST /ai/live-safety-score',
       emergencyAssistance: 'POST /ai/emergency-assistance'
     }
   });

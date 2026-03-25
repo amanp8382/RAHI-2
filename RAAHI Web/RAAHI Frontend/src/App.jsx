@@ -9,6 +9,7 @@ import Home from './components/Home';
 import Register from './Register';
 import ProfileSetup from './ProfileSetup';
 import Dashboard from './components/Dashboard';
+import SafetyScorePage from './components/SafetyScorePage';
 import Alerts from './components/Alerts';
 import Help from './components/Help';
 import Admin from './components/Admin';
@@ -160,6 +161,8 @@ const App = () => {
         return <ProfileSetup />;
       case 'dashboard':
         return <Dashboard />;
+      case 'safety-score':
+        return <SafetyScorePage />;
       case 'alerts':
         return <Alerts />;
       case 'help':

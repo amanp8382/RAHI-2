@@ -69,6 +69,7 @@ const apiService = {
   ai: {
     getSafetyRecommendations: async (location) => (await api.post('/ai/safety-recommendations', { location })).data,
     analyzeRisk: async (data) => (await api.post('/ai/risk-analysis', data)).data,
+    getLiveSafetyScore: async (data) => (await api.post('/ai/live-safety-score', data)).data,
     getChatbotResponse: async (message) => (await api.post('/ai/chatbot', { message })).data,
     getEmergencyAssistance: async (location, emergencyType) => (await api.post('/ai/emergency-assistance', { location, emergencyType })).data
   },

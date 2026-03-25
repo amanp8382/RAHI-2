@@ -24,6 +24,7 @@ const Header = ({ onPageChange, currentPage }) => {
 
   const displayName = user?.firstName || user?.fullName || 'Traveler';
   const hasEmergencyAccess = user?.userType === 'police' || user?.userType === 'department' || user?.role === 'tourist_department';
+  const isTouristUser = user?.userType === 'tourist' || (!user?.userType && user?.role === 'user');
 
   return (
     <header className="header">
@@ -35,6 +36,9 @@ const Header = ({ onPageChange, currentPage }) => {
         <nav className="nav-desktop">
           <a href="#home" className={`nav-link ${currentPage === 'home' ? 'active' : ''}`} onClick={() => handleLinkClick('home')}>Home</a>
           <a href="#dashboard" className={`nav-link ${currentPage === 'dashboard' ? 'active' : ''}`} onClick={() => handleLinkClick('dashboard')}>Tourist Dashboard</a>
+          {isTouristUser && (
+            <a href="#safety-score" className={`nav-link ${currentPage === 'safety-score' ? 'active' : ''}`} onClick={() => handleLinkClick('safety-score')}>Safety Score</a>
+          )}
           <a href="#help" className={`nav-link ${currentPage === 'help' ? 'active' : ''}`} onClick={() => handleLinkClick('help')}>Help & Support</a>
           {hasEmergencyAccess && (
             <a href="#emergency-dashboard" className={`nav-link ${currentPage === 'emergency-dashboard' ? 'active' : ''}`} onClick={() => handleLinkClick('emergency-dashboard')}>Emergency Dashboard</a>
@@ -76,6 +80,9 @@ const Header = ({ onPageChange, currentPage }) => {
         <div className="mobile-nav-content">
           <a href="#home" className="mobile-nav-link" data-page="home" onClick={() => handleLinkClick('home')}>Home</a>
           <a href="#dashboard" className="mobile-nav-link" data-page="dashboard" onClick={() => handleLinkClick('dashboard')}>Tourist Dashboard</a>
+          {isTouristUser && (
+            <a href="#safety-score" className="mobile-nav-link" data-page="safety-score" onClick={() => handleLinkClick('safety-score')}>Safety Score</a>
+          )}
           <a href="#help" className="mobile-nav-link" data-page="help" onClick={() => handleLinkClick('help')}>Help & Support</a>
           {hasEmergencyAccess && (
             <a href="#emergency-dashboard" className="mobile-nav-link" data-page="emergency-dashboard" onClick={() => handleLinkClick('emergency-dashboard')}>Emergency Dashboard</a>
