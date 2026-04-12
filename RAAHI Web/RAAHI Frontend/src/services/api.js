@@ -11,6 +11,20 @@ const api = axios.create({
   }
 });
 
+const chatbotFallbackClients = [
+  api,
+  axios.create({
+    baseURL: 'http://localhost:5000/api',
+    timeout: 15000,
+    headers: { 'Content-Type': 'application/json' }
+  }),
+  axios.create({
+    baseURL: 'http://127.0.0.1:5000/api',
+    timeout: 15000,
+    headers: { 'Content-Type': 'application/json' }
+  })
+];
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -70,7 +84,20 @@ const apiService = {
     getSafetyRecommendations: async (location) => (await api.post('/ai/safety-recommendations', { location })).data,
     analyzeRisk: async (data) => (await api.post('/ai/risk-analysis', data)).data,
     getLiveSafetyScore: async (data) => (await api.post('/ai/live-safety-score', data)).data,
-    getChatbotResponse: async (message) => (await api.post('/ai/chatbot', { message })).data,
+    getChatbotResponse: async (message) => {
+      let lastError;
+
+      for (const client of chatbotFallbackClients) {
+        try {
+          const response = await client.post('/ai/chatbot', { message });
+          return response.data;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError;
+    },
     getEmergencyAssistance: async (location, emergencyType) => (await api.post('/ai/emergency-assistance', { location, emergencyType })).data
   },
 

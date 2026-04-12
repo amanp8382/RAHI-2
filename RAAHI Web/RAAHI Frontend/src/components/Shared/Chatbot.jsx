@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import apiService from '../../services/api';
-import geminiService from '../../services/geminiService';
 
 const Chatbot = () => {
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
-      text: "Hi there! How can I help you today? I can tell you about our features, safety tips, or famous destinations in India.",
+      text: 'Ask me only about tourist safety and travel. I can help with destinations, transport, weather, scams, emergency help, and trip planning.',
       sender: 'bot'
     }
   ]);
@@ -30,43 +29,20 @@ const Chatbot = () => {
     setMessages(prevMessages => [...prevMessages, typingIndicator]);
 
     try {
-      // First try the backend API
       const response = await apiService.ai.getChatbotResponse(newUserMessage.text);
       const botText = response.message || "I'm sorry, I'm having trouble connecting right now. Please try again later.";
       
       setMessages(prevMessages => 
         prevMessages.filter(msg => !msg.isTyping).concat({ text: botText, sender: 'bot' })
       );
-
     } catch (backendError) {
-      console.log("Backend unavailable, trying Gemini AI directly:", backendError.message);
-      
-      // If backend fails, try Gemini AI directly
-      try {
-        if (geminiService.isAvailable()) {
-          const geminiResponse = await geminiService.generateResponse(newUserMessage.text);
-          const botText = geminiResponse.message || "I'm sorry, I couldn't generate a response right now.";
-          
-          setMessages(prevMessages => 
-            prevMessages.filter(msg => !msg.isTyping).concat({ 
-              text: botText, 
-              sender: 'bot'
-            })
-          );
-        } else {
-          throw new Error('Gemini AI service not available');
-        }
-      } catch (geminiError) {
-        console.error("Error with Gemini AI:", geminiError);
-        
-        // Final fallback message
-        setMessages(prevMessages => 
-          prevMessages.filter(msg => !msg.isTyping).concat({ 
-            text: "I'm sorry, I'm experiencing technical difficulties right now. Please try again later or contact support if the issue persists.", 
-            sender: 'bot' 
-          })
-        );
-      }
+      console.error('Chatbot request failed:', backendError);
+      setMessages(prevMessages =>
+        prevMessages.filter(msg => !msg.isTyping).concat({
+          text: 'The chatbot is temporarily unavailable. It only answers tourist safety and travel questions, so please try again in a moment.',
+          sender: 'bot'
+        })
+      );
     }
   };
 
@@ -99,7 +75,7 @@ const Chatbot = () => {
           <input 
             type="text" 
             id="user-input" 
-            placeholder="Type a message..." 
+            placeholder="Ask a travel or tourist safety question..." 
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
             onKeyPress={handleKeyPress}
