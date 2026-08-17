@@ -6,10 +6,11 @@ import FormField from '../components/FormField';
 import colors from '../theme/colors';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function LoginScreen() {
-  const { login, isLoading } = useAuth();
+export default function LoginScreen({ navigation }) {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
@@ -18,8 +19,11 @@ export default function LoginScreen() {
       return;
     }
 
+    setIsSubmitting(true);
     setError('');
     const result = await login({ email: email.trim(), password, userType: 'tourist' });
+    setIsSubmitting(false);
+
     if (!result.success) {
       setError(result.error || 'Login failed.');
     }
@@ -31,7 +35,7 @@ export default function LoginScreen() {
         <Text style={styles.eyebrow}>RAAHI Mobile</Text>
         <Text style={styles.title}>Traveler login</Text>
         <Text style={styles.subtitle}>
-          Use the same tourist account you created on RAAHI Web. This mobile app keeps the same traveler profile, live location, and safety score flow.
+          Use the same tourist account you created on RAAHI Web to unlock live location, emergency tools, AI guidance, and safer travel planning.
         </Text>
       </LinearGradient>
 
@@ -53,8 +57,12 @@ export default function LoginScreen() {
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        <Pressable onPress={handleSubmit} style={styles.primaryButton} disabled={isLoading}>
-          {isLoading ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.primaryButtonLabel}>Login</Text>}
+        <Pressable onPress={handleSubmit} style={styles.primaryButton} disabled={isSubmitting}>
+          {isSubmitting ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.primaryButtonLabel}>Login</Text>}
+        </Pressable>
+
+        <Pressable onPress={() => navigation.navigate('Register')} style={styles.secondaryButton}>
+          <Text style={styles.secondaryButtonLabel}>Create a new traveler account</Text>
         </Pressable>
 
         <Text style={styles.helperText}>
@@ -110,6 +118,17 @@ const styles = StyleSheet.create({
   primaryButtonLabel: {
     color: '#ffffff',
     fontSize: 16,
+    fontWeight: '700'
+  },
+  secondaryButton: {
+    minHeight: 52,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#efe4d9'
+  },
+  secondaryButtonLabel: {
+    color: colors.text,
     fontWeight: '700'
   },
   errorText: {

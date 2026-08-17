@@ -1,111 +1,150 @@
-import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
+import React, { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenShell from '../components/ScreenShell';
 import TopBar from '../components/TopBar';
 import InfoCard from '../components/InfoCard';
-import SafetyZoneMap from '../components/SafetyZoneMap';
 import useLiveLocation from '../hooks/useLiveLocation';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import colors from '../theme/colors';
-import { API_BASE_URL } from '../services/api';
-
-const avatarFromName = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1f8a83&color=fff&size=256`;
 
 export default function DashboardScreen({ navigation }) {
-  const { user, logout } = useAuth();
+  const { user, settings } = useAuth();
   const { location, status } = useLiveLocation(true);
+  const [stats, setStats] = useState(null);
+  const [tips, setTips] = useState([]);
+  const [destinations, setDestinations] = useState([]);
 
-  const displayName = user?.fullName || 'Traveler';
-  const photoUri = user?.profilePhoto?.dataUrl || avatarFromName(displayName);
-  const publicCardUrl = user?.publicCardPath ? `${API_BASE_URL.replace(/\/api$/, '')}${user.publicCardPath}` : '';
-  const aadhaarDisplay = user?.aadhaarNumber ? `XXXX-XXXX-${String(user.aadhaarNumber).slice(-4)}` : 'Not provided';
+  useEffect(() => {
+    let active = true;
+
+    const loadDashboard = async () => {
+      const [nextStats, nextTips, nextDestinations] = await Promise.all([
+        apiService.getUserStats(),
+        apiService.getSafetyTips(),
+        apiService.getDestinations()
+      ]);
+
+      if (!active) return;
+      setStats(nextStats);
+      setTips(nextTips.slice(0, 2));
+      setDestinations(nextDestinations.slice(0, 3));
+    };
+
+    loadDashboard();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const summaryTiles = [
+    {
+      label: 'Profile',
+      value: `${stats?.profileCompleteness ?? 0}%`,
+      caption: 'completion',
+      icon: 'person-circle-outline'
+    },
+    {
+      label: 'Activities',
+      value: stats?.totalActivities ?? 0,
+      caption: 'logged',
+      icon: 'trail-sign-outline'
+    },
+    {
+      label: 'Location',
+      value: location ? 'Live' : 'Standby',
+      caption: settings?.locationSharing ? 'sharing on' : 'private',
+      icon: 'navigate-outline'
+    }
+  ];
+
+  const quickActions = [
+    { label: 'Open Live Map', route: 'Live Map', icon: 'map-outline' },
+    { label: 'Emergency Help', route: 'Emergency', icon: 'warning-outline' },
+    { label: 'AI Assistant', route: 'AI Assistant', icon: 'sparkles-outline' },
+    { label: 'Nearby Places', route: 'Destinations', icon: 'compass-outline' }
+  ];
 
   return (
     <ScreenShell>
       <TopBar
-        title="Tourist Dashboard"
-        subtitle="Your RAAHI profile and trip details"
+        title="Dashboard"
+        subtitle="Your tourist safety overview"
         onMenuPress={() => navigation.openDrawer()}
         onProfilePress={() => navigation.navigate('Profile')}
       />
 
-      <LinearGradient colors={['#9f7a5d', '#8b6b52']} style={styles.hero}>
-        <View style={styles.heroCopy}>
-          <Text style={styles.heroEyebrow}>RAAHI verify</Text>
-          <Text style={styles.heroTitle}>Verified Traveler</Text>
-          <Text style={styles.heroText}>{status}</Text>
-        </View>
-        <View style={styles.heroBadge}>
-          <Text style={styles.heroBadgeLabel}>Traveler ID</Text>
-          <Text style={styles.heroBadgeValue}>{user?.travelerId || 'Pending'}</Text>
+      <LinearGradient colors={['#1f8a83', '#14615d']} style={styles.hero}>
+        <Text style={styles.heroEyebrow}>Live traveler status</Text>
+        <Text style={styles.heroTitle}>Welcome back, {user?.firstName || 'Traveler'}</Text>
+        <Text style={styles.heroText}>{status}</Text>
+        <View style={styles.heroRow}>
+          <View style={styles.heroPill}>
+            <Ionicons name="shield-checkmark-outline" size={16} color="#ffffff" />
+            <Text style={styles.heroPillText}>{user?.aadhaarVerified ? 'Verified profile' : 'Finish profile setup'}</Text>
+          </View>
+          <View style={styles.heroPill}>
+            <Ionicons name="location-outline" size={16} color="#ffffff" />
+            <Text style={styles.heroPillText}>{user?.destination || 'Trip not set'}</Text>
+          </View>
         </View>
       </LinearGradient>
 
-      <InfoCard>
-        <View style={styles.profileRow}>
-          <Image source={{ uri: photoUri }} style={styles.avatar} />
-          <View style={styles.profileCopy}>
-            <Text style={styles.name}>{displayName}</Text>
-            <Text style={styles.email}>{user?.email}</Text>
-            <View style={[styles.statusPill, user?.aadhaarVerified ? styles.verified : styles.pending]}>
-              <Text style={styles.statusPillText}>
-                {user?.aadhaarVerified ? 'Verified traveler' : 'Profile needs attention'}
-              </Text>
+      <View style={styles.tileGrid}>
+        {summaryTiles.map((item) => (
+          <InfoCard key={item.label}>
+            <Ionicons name={item.icon} size={22} color={colors.primaryDark} />
+            <Text style={styles.tileLabel}>{item.label}</Text>
+            <Text style={styles.tileValue}>{item.value}</Text>
+            <Text style={styles.tileCaption}>{item.caption}</Text>
+          </InfoCard>
+        ))}
+      </View>
+
+      <InfoCard eyebrow="Quick access" title="Core safety tools">
+        <View style={styles.quickGrid}>
+          {quickActions.map((item) => (
+            <Pressable key={item.route} style={styles.quickAction} onPress={() => navigation.navigate(item.route)}>
+              <Ionicons name={item.icon} size={22} color={colors.primaryDark} />
+              <Text style={styles.quickLabel}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </InfoCard>
+
+      <InfoCard eyebrow="Safety tips" title="What to keep in mind today">
+        {tips.map((tip) => (
+          <View key={tip.id} style={styles.listRow}>
+            <View style={styles.dot} />
+            <View style={styles.listCopy}>
+              <Text style={styles.listTitle}>{tip.title}</Text>
+              <Text style={styles.listText}>{tip.description}</Text>
             </View>
           </View>
-        </View>
+        ))}
       </InfoCard>
 
-      <InfoCard eyebrow="Trip profile" title="Traveler details">
-        <View style={styles.detailGrid}>
-          <Detail label="Phone" value={user?.phone} />
-          <Detail label="Age" value={user?.age} />
-          <Detail label="Destination" value={user?.destination} />
-          <Detail label="Trip duration" value={user?.tripDurationDays ? `${user.tripDurationDays} days` : ''} />
-          <Detail label="Blood group" value={user?.bloodGroup} />
-          <Detail label="Health details" value={user?.medicalConditions} />
-          <Detail label="Aadhaar" value={aadhaarDisplay} />
-          <Detail
-            label="Live coordinates"
-            value={location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'Waiting for GPS'}
-          />
-        </View>
+      <InfoCard eyebrow="Recommended places" title="Destinations near your plan">
+        {destinations.map((destination) => (
+          <Pressable
+            key={destination.id}
+            style={styles.destinationRow}
+            onPress={() => navigation.navigate('Destinations')}
+          >
+            <View>
+              <Text style={styles.destinationName}>{destination.name}</Text>
+              <Text style={styles.destinationMeta}>
+                {destination.category} · Rating {destination.rating} · Safety {destination.safetyRating}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          </Pressable>
+        ))}
       </InfoCard>
-
-      <InfoCard eyebrow="Location" title="Live location and safety zones">
-        <SafetyZoneMap location={location} />
-      </InfoCard>
-
-      <InfoCard eyebrow="Verification" title="Traveler QR">
-        <View style={styles.qrCard}>
-          {publicCardUrl ? <QRCode value={publicCardUrl} size={140} /> : <Text style={styles.muted}>Public traveler card will appear after sync.</Text>}
-          <Text style={styles.qrHint}>Share this QR so officials can verify your traveler card.</Text>
-        </View>
-      </InfoCard>
-
-      <View style={styles.actionRow}>
-        <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('Safety Score')}>
-          <Text style={styles.secondaryButtonText}>Safety Score</Text>
-        </Pressable>
-        <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('Profile')}>
-          <Text style={styles.secondaryButtonText}>Edit Profile</Text>
-        </Pressable>
-        <Pressable style={styles.primaryButton} onPress={logout}>
-          <Text style={styles.primaryButtonText}>Logout</Text>
-        </Pressable>
-      </View>
     </ScreenShell>
-  );
-}
-
-function Detail({ label, value }) {
-  return (
-    <View style={styles.detailItem}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value || 'Not provided'}</Text>
-    </View>
   );
 }
 
@@ -113,144 +152,120 @@ const styles = StyleSheet.create({
   hero: {
     borderRadius: 28,
     padding: 22,
-    gap: 20
-  },
-  heroCopy: {
-    gap: 8
+    gap: 10
   },
   heroEyebrow: {
-    color: '#eadfd4',
+    color: '#ccebe7',
     textTransform: 'uppercase',
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     fontWeight: '700',
     fontSize: 12
   },
   heroTitle: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '800',
     color: '#ffffff'
   },
   heroText: {
-    color: '#f3ebe3',
+    color: '#e6f5f2',
     lineHeight: 22,
     fontSize: 15
   },
-  heroBadge: {
-    borderRadius: 18,
-    padding: 16,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)'
-  },
-  heroBadgeLabel: {
-    color: '#eadfd4',
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1.4
-  },
-  heroBadgeValue: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 8
-  },
-  profileRow: {
+  heroRow: {
     flexDirection: 'row',
-    gap: 16,
-    alignItems: 'center'
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 6
   },
-  avatar: {
-    width: 76,
-    height: 76,
-    borderRadius: 24
-  },
-  profileCopy: {
-    flex: 1,
-    gap: 6
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.text
-  },
-  email: {
-    color: colors.textMuted,
-    fontSize: 15
-  },
-  statusPill: {
-    alignSelf: 'flex-start',
+  heroPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.14)'
   },
-  verified: {
-    backgroundColor: colors.safe
+  heroPillText: {
+    color: '#ffffff',
+    fontWeight: '700'
   },
-  pending: {
-    backgroundColor: '#f7ead7'
+  tileGrid: {
+    gap: 12
   },
-  statusPillText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.text
-  },
-  detailGrid: {
-    gap: 14
-  },
-  detailItem: {
-    gap: 4
-  },
-  detailLabel: {
+  tileLabel: {
     color: colors.textSoft,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
-    fontWeight: '700',
-    fontSize: 11
+    fontSize: 11,
+    fontWeight: '700'
   },
-  detailValue: {
+  tileValue: {
     color: colors.text,
-    fontSize: 16,
-    lineHeight: 22
+    fontSize: 28,
+    fontWeight: '800'
   },
-  qrCard: {
-    alignItems: 'center',
-    gap: 14
-  },
-  qrHint: {
-    textAlign: 'center',
-    color: colors.textMuted,
-    lineHeight: 20
-  },
-  muted: {
+  tileCaption: {
     color: colors.textMuted
   },
-  actionRow: {
-    gap: 12,
-    marginBottom: 20
+  quickGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12
   },
-  secondaryButton: {
-    minHeight: 52,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+  quickAction: {
+    width: '47%',
+    minHeight: 112,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surfaceStrong
+    backgroundColor: '#fcf7f2',
+    padding: 16,
+    justifyContent: 'space-between'
   },
-  secondaryButtonText: {
+  quickLabel: {
+    color: colors.text,
+    fontWeight: '700',
+    lineHeight: 20
+  },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
+    marginTop: 6
+  },
+  listCopy: {
+    flex: 1,
+    gap: 4
+  },
+  listTitle: {
     color: colors.text,
     fontWeight: '700'
   },
-  primaryButton: {
-    minHeight: 54,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary
+  listText: {
+    color: colors.textMuted,
+    lineHeight: 21
   },
-  primaryButtonText: {
-    color: '#ffffff',
+  destinationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#efe4d9'
+  },
+  destinationName: {
+    color: colors.text,
     fontWeight: '700'
+  },
+  destinationMeta: {
+    color: colors.textMuted,
+    marginTop: 4
   }
 });

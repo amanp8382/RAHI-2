@@ -18,12 +18,19 @@ const hasCompletedProfile = (user) => Boolean(
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings] = useState(null);
 
   useEffect(() => {
     const bootstrap = async () => {
       try {
-        const token = await storage.getToken();
-        const savedUser = await storage.getUser();
+        const [token, savedUser, savedSettings] = await Promise.all([
+          storage.getToken(),
+          storage.getUser(),
+          storage.getSettings()
+        ]);
+
+        setSettings(savedSettings);
+
         if (!token || !savedUser) {
           setIsLoading(false);
           return;
@@ -62,6 +69,29 @@ export function AuthProvider({ children }) {
       return {
         success: false,
         error: apiService.toUserMessage(error, 'Unable to login right now.')
+      };
+    }
+  };
+
+  const register = async (payload) => {
+    try {
+      const response = await apiService.register(payload);
+      if (!response.success) {
+        return { success: false, error: response.message || 'Registration failed.' };
+      }
+
+      if (response.token && response.user) {
+        const normalized = normalizeUser(response.user);
+        await storage.setToken(response.token);
+        await storage.setUser(normalized);
+        setUser(normalized);
+      }
+
+      return { success: true, data: response };
+    } catch (error) {
+      return {
+        success: false,
+        error: apiService.toUserMessage(error, 'Unable to register right now.')
       };
     }
   };
@@ -109,6 +139,11 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateAppSettings = async (nextSettings) => {
+    await storage.setSettings(nextSettings);
+    setSettings(nextSettings);
+  };
+
   const logout = async () => {
     await storage.clearSession();
     setUser(null);
@@ -116,14 +151,17 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     user,
+    settings,
     isLoading,
     isAuthenticated: Boolean(user),
     hasCompletedProfile: hasCompletedProfile(user),
     login,
+    register,
     refreshUser,
     updateProfile,
+    updateAppSettings,
     logout
-  }), [user, isLoading]);
+  }), [user, settings, isLoading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

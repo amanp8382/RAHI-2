@@ -6,20 +6,12 @@ const User = require('../models/User');
 const { isMongoAvailable } = require('./db');
 
 const dataDir = path.join(__dirname, '..', 'data');
-const dataFile = path.join(dataDir, 'users.json');
+const usersFile = path.join(dataDir, 'users.json');
 
 const defaultUserShape = {
-  phone: '',
-  address: '',
-  age: '',
-  destination: '',
-  tripDurationDays: '',
-  bloodGroup: '',
-  medicalConditions: '',
-  aadhaarNumber: '',
-  aadhaarVerified: false,
-  travelPreferences: [],
-  profilePhoto: null,
+  profilePicture: null,
+  isActive: true,
+  lastLogin: null,
   emergencyContacts: [],
   locationSettings: {
     shareLocation: true,
@@ -29,241 +21,187 @@ const defaultUserShape = {
     pushNotifications: true,
     emailNotifications: false,
     emergencyAlerts: true
-  },
-  isActive: true,
-  lastLogin: null
+  }
+};
+
+const ensureStore = async () => {
+  await fs.mkdir(dataDir, { recursive: true });
+  try {
+    await fs.access(usersFile);
+  } catch {
+    await fs.writeFile(usersFile, '[]', 'utf8');
+  }
+};
+
+const readUsers = async () => {
+  await ensureStore();
+  const raw = await fs.readFile(usersFile, 'utf8');
+  return JSON.parse(raw);
+};
+
+const writeUsers = async (users) => {
+  await ensureStore();
+  await fs.writeFile(usersFile, JSON.stringify(users, null, 2), 'utf8');
 };
 
 const normalizeLocalUser = (user) => ({
   ...defaultUserShape,
   ...user,
-  travelPreferences: Array.isArray(user.travelPreferences) ? user.travelPreferences : [],
-  emergencyContacts: Array.isArray(user.emergencyContacts) ? user.emergencyContacts : [],
-  locationSettings: {
-    ...defaultUserShape.locationSettings,
-    ...(user.locationSettings || {})
-  },
-  notificationSettings: {
-    ...defaultUserShape.notificationSettings,
-    ...(user.notificationSettings || {})
-  }
+  _id: user._id || user.id,
+  id: user.id || user._id,
+  createdAt: user.createdAt || new Date().toISOString(),
+  updatedAt: user.updatedAt || new Date().toISOString()
 });
 
-const ensureStore = async () => {
-  await fs.mkdir(dataDir, { recursive: true });
-  try {
-    await fs.access(dataFile);
-  } catch {
-    await fs.writeFile(dataFile, JSON.stringify({ users: [] }, null, 2));
+const sanitizeUser = (user) => {
+  const next = { ...user };
+  delete next.password;
+  return next;
+};
+
+const updateUserById = async (id, updates) => {
+  const users = await readUsers();
+  const index = users.findIndex((entry) => entry._id === id || entry.id === id);
+  if (index === -1) return null;
+
+  const current = normalizeLocalUser(users[index]);
+  const next = {
+    ...current,
+    ...updates,
+    emergencyContacts: updates.emergencyContacts ?? current.emergencyContacts,
+    locationSettings: {
+      ...current.locationSettings,
+      ...(updates.locationSettings || {})
+    },
+    notificationSettings: {
+      ...current.notificationSettings,
+      ...(updates.notificationSettings || {})
+    },
+    updatedAt: new Date().toISOString()
+  };
+
+  if (updates.password) {
+    next.password = await bcrypt.hash(updates.password, await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS, 10) || 12));
   }
+
+  users[index] = next;
+  await writeUsers(users);
+  return sanitizeUser(wrapLocalUser(next));
 };
 
-const readStore = async () => {
-  await ensureStore();
-  const raw = await fs.readFile(dataFile, 'utf8');
-  return JSON.parse(raw);
-};
-
-const writeStore = async (store) => {
-  await ensureStore();
-  await fs.writeFile(dataFile, JSON.stringify(store, null, 2));
-};
-
-const publicUser = (user) => {
-  if (!user) return null;
-
+const wrapLocalUser = (user) => {
+  const normalized = normalizeLocalUser(user);
   return {
-    id: user.id || user._id,
-    _id: user._id || user.id,
-    name: user.name || [user.firstName, user.lastName].filter(Boolean).join(' ').trim(),
-    firstName: user.firstName || '',
-    lastName: user.lastName || '',
-    fullName: user.fullName || user.name || [user.firstName, user.lastName].filter(Boolean).join(' ').trim(),
-    email: user.email,
-    phone: user.phone || '',
-    address: user.address || '',
-    age: user.age || '',
-    destination: user.destination || '',
-    tripDurationDays: user.tripDurationDays || '',
-    bloodGroup: user.bloodGroup || '',
-    medicalConditions: user.medicalConditions || '',
-    aadhaarNumber: user.aadhaarNumber || '',
-    aadhaarVerified: Boolean(user.aadhaarVerified),
-    travelPreferences: Array.isArray(user.travelPreferences) ? user.travelPreferences : [],
-    profilePhoto: user.profilePhoto || null,
-    profilePicture: user.profilePicture || user.profilePhoto || null,
-    emergencyContacts: Array.isArray(user.emergencyContacts) ? user.emergencyContacts : [],
-    locationSettings: user.locationSettings || defaultUserShape.locationSettings,
-    notificationSettings: user.notificationSettings || defaultUserShape.notificationSettings,
-    role: user.role || 'user',
-    userType: user.userType || 'tourist',
-    travelerId: user.travelerId || '',
-    publicCardPath: user.publicCardPath || '',
-    lastLogin: user.lastLogin || null,
-    createdAt: user.createdAt || null,
-    updatedAt: user.updatedAt || null,
-    isActive: user.isActive !== false
+    ...normalized,
+    async comparePassword(candidatePassword) {
+      return bcrypt.compare(candidatePassword, normalized.password);
+    },
+    async updateLastLogin() {
+      const nextLogin = new Date().toISOString();
+      const updated = await updateUserById(normalized._id, { lastLogin: nextLogin });
+      Object.assign(this, updated);
+      return this;
+    }
   };
 };
 
-const toMongoUserPayload = (payload) => ({
-  ...payload,
-  name: payload.name || [payload.firstName, payload.lastName].filter(Boolean).join(' ').trim(),
-  firstName: payload.firstName || '',
-  lastName: payload.lastName || '',
-  fullName: payload.fullName || payload.name || [payload.firstName, payload.lastName].filter(Boolean).join(' ').trim()
+const findLocalByEmail = async (email, options = {}) => {
+  const users = await readUsers();
+  const user = users.find((entry) => entry.email.toLowerCase() === email.toLowerCase());
+  if (!user) return null;
+  const wrapped = wrapLocalUser(user);
+  return options.includePassword ? wrapped : sanitizeUser(wrapped);
+};
+
+const findLocalById = async (id, options = {}) => {
+  const users = await readUsers();
+  const user = users.find((entry) => entry._id === id || entry.id === id);
+  if (!user) return null;
+  const wrapped = wrapLocalUser(user);
+  return options.includePassword ? wrapped : sanitizeUser(wrapped);
+};
+
+const createLocalUser = async ({ email, password, name, phone, address }) => {
+  const users = await readUsers();
+  const now = new Date().toISOString();
+  const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS, 10) || 12));
+  const user = {
+    ...defaultUserShape,
+    _id: crypto.randomUUID(),
+    name,
+    email: email.toLowerCase(),
+    password: hashedPassword,
+    phone: phone || '',
+    address: address || '',
+    createdAt: now,
+    updatedAt: now
+  };
+  users.push(user);
+  await writeUsers(users);
+  return sanitizeUser(wrapLocalUser(user));
+};
+
+const buildMongoQuery = (query) => ({
+  async select(selection) {
+    return query.select(selection);
+  },
+  then(resolve, reject) {
+    return query.then(resolve, reject);
+  },
+  catch(reject) {
+    return query.catch(reject);
+  }
 });
 
-const createLocalUser = async (payload) => {
-  const store = await readStore();
-  const now = new Date().toISOString();
-  const email = payload.email.toLowerCase();
-  const passwordHash = await bcrypt.hash(payload.password, parseInt(process.env.BCRYPT_ROUNDS, 10) || 12);
-
-  const user = normalizeLocalUser({
-    id: crypto.randomUUID(),
-    _id: crypto.randomUUID(),
-    email,
-    password: passwordHash,
-    name: payload.name || [payload.firstName, payload.lastName].filter(Boolean).join(' ').trim(),
-    firstName: payload.firstName || '',
-    lastName: payload.lastName || '',
-    fullName: payload.fullName || payload.name || [payload.firstName, payload.lastName].filter(Boolean).join(' ').trim(),
-    createdAt: now,
-    updatedAt: now,
-    lastLogin: now,
-    role: payload.role || 'user',
-    userType: payload.userType || 'tourist',
-    ...payload
-  });
-
-  store.users.push(user);
-  await writeStore(store);
-  return user;
-};
-
-const updateLocalUser = async (userId, updates) => {
-  const store = await readStore();
-  const index = store.users.findIndex((entry) => entry.id === userId || entry._id === userId);
-  if (index < 0) {
-    return null;
-  }
-
-  const current = normalizeLocalUser(store.users[index]);
-  const nextUser = normalizeLocalUser({
-    ...current,
-    ...updates,
-    updatedAt: new Date().toISOString()
-  });
-  store.users[index] = nextUser;
-  await writeStore(store);
-  return nextUser;
-};
-
-const getLocalUserById = async (userId) => {
-  const store = await readStore();
-  const user = store.users.find((entry) => entry.id === userId || entry._id === userId);
-  return user ? normalizeLocalUser(user) : null;
-};
-
-const getLocalUserByEmail = async (email) => {
-  const store = await readStore();
-  const user = store.users.find((entry) => entry.email === email.toLowerCase());
-  return user ? normalizeLocalUser(user) : null;
-};
-
-const verifyLocalPassword = async (user, password) => bcrypt.compare(password, user.password);
-
-const findByEmail = async (email, options = {}) => {
-  const normalizedEmail = email.toLowerCase();
+const findByEmail = (email) => {
   if (isMongoAvailable()) {
-    let query = User.findOne({ email: normalizedEmail });
-    if (options.includePassword) {
-      query = query.select('+password');
-    }
-    const user = await query;
-    return user ? publicUser(user.toObject ? user.toObject() : user) : null;
+    return buildMongoQuery(User.findOne({ email: email.toLowerCase() }));
   }
-
-  const user = await getLocalUserByEmail(normalizedEmail);
-  if (!user) return null;
-  return options.includePassword ? user : publicUser(user);
+  return {
+    async select(selection) {
+      return findLocalByEmail(email, { includePassword: selection === '+password' });
+    },
+    then(resolve, reject) {
+      return findLocalByEmail(email).then(resolve, reject);
+    },
+    catch(reject) {
+      return findLocalByEmail(email).catch(reject);
+    }
+  };
 };
 
-const findById = async (userId, options = {}) => {
+const findById = (id) => {
   if (isMongoAvailable()) {
-    let query = User.findById(userId);
-    if (options.includePassword) {
-      query = query.select('+password');
-    }
-    const user = await query;
-    return user ? publicUser(user.toObject ? user.toObject() : user) : null;
+    return buildMongoQuery(User.findById(id));
   }
-
-  const user = await getLocalUserById(userId);
-  if (!user) return null;
-  return options.includePassword ? user : publicUser(user);
+  return {
+    async select(selection) {
+      return findLocalById(id, { includePassword: selection === '+password' });
+    },
+    then(resolve, reject) {
+      return findLocalById(id).then(resolve, reject);
+    },
+    catch(reject) {
+      return findLocalById(id).catch(reject);
+    }
+  };
 };
 
 const createUser = async (payload) => {
   if (isMongoAvailable()) {
-    const user = new User(toMongoUserPayload(payload));
+    const user = new User(payload);
     await user.save();
-    await user.updateLastLogin();
-    const refreshed = await User.findById(user._id);
-    return publicUser(refreshed.toObject());
+    return user;
   }
-
-  const localUser = await createLocalUser(payload);
-  return publicUser(localUser);
+  return createLocalUser(payload);
 };
 
-const comparePassword = async (user, password) => {
-  if (isMongoAvailable()) {
-    const mongoUser = await User.findById(user.id || user._id).select('+password');
-    if (!mongoUser) return false;
-    return mongoUser.comparePassword(password);
-  }
-
-  return verifyLocalPassword(user, password);
-};
-
-const touchLastLogin = async (userId) => {
-  if (isMongoAvailable()) {
-    const user = await User.findById(userId);
-    if (user) {
-      await user.updateLastLogin();
-    }
-    return;
-  }
-
-  await updateLocalUser(userId, { lastLogin: new Date().toISOString() });
-};
-
-const updateUser = async (userId, updates) => {
-  if (isMongoAvailable()) {
-    const user = await User.findById(userId).select('+password');
-    if (!user) return null;
-
-    Object.entries(updates).forEach(([key, value]) => {
-      user[key] = value;
-    });
-    await user.save();
-
-    const refreshed = await User.findById(userId);
-    return refreshed ? publicUser(refreshed.toObject()) : null;
-  }
-
-  const localUser = await updateLocalUser(userId, updates);
-  return localUser ? publicUser(localUser) : null;
-};
+const deactivateUserById = async (id) => updateUserById(id, { isActive: false });
 
 module.exports = {
   findByEmail,
   findById,
   createUser,
-  comparePassword,
-  touchLastLogin,
-  updateUser,
-  publicUser
+  updateUserById,
+  deactivateUserById
 };

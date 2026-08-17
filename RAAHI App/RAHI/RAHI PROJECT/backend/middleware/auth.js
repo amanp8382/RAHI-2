@@ -1,11 +1,10 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const userStore = require('../services/userStore');
 
 const auth = async (req, res, next) => {
   try {
-    // Get token from header
     const authHeader = req.header('Authorization');
-    
+
     if (!authHeader) {
       return res.status(401).json({
         success: false,
@@ -13,7 +12,6 @@ const auth = async (req, res, next) => {
       });
     }
 
-    // Check if token starts with 'Bearer '
     if (!authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
@@ -21,9 +19,8 @@ const auth = async (req, res, next) => {
       });
     }
 
-    // Extract token
     const token = authHeader.substring(7);
-    
+
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -32,11 +29,9 @@ const auth = async (req, res, next) => {
     }
 
     try {
-      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-      
-      // Check if user still exists
-      const user = await User.findById(decoded.userId);
+      const user = await userStore.findById(decoded.userId);
+
       if (!user) {
         return res.status(401).json({
           success: false,
@@ -44,7 +39,6 @@ const auth = async (req, res, next) => {
         });
       }
 
-      // Check if user is active
       if (!user.isActive) {
         return res.status(401).json({
           success: false,
@@ -52,29 +46,30 @@ const auth = async (req, res, next) => {
         });
       }
 
-      // Add user info to request
       req.userId = decoded.userId;
       req.user = user;
-      
-      next();
+
+      return next();
     } catch (tokenError) {
       if (tokenError.name === 'TokenExpiredError') {
         return res.status(401).json({
           success: false,
           error: 'Token has expired'
         });
-      } else if (tokenError.name === 'JsonWebTokenError') {
+      }
+
+      if (tokenError.name === 'JsonWebTokenError') {
         return res.status(401).json({
           success: false,
           error: 'Invalid token'
         });
-      } else {
-        throw tokenError;
       }
+
+      throw tokenError;
     }
   } catch (error) {
     console.error('Auth middleware error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Server error in authentication'
     });
