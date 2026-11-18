@@ -222,31 +222,8 @@ exports.touristDepartmentLogin = async (req, res) => {
       });
     }
 
-    const normalizedState = state.trim().toLowerCase().replace(/\s+/g, ' ');
-    const stateMapping = {
-      'uttar pradesh': 'tourist.department.up@gmail.com',
-      up: 'tourist.department.up@gmail.com',
-      maharashtra: 'tourist.department.mh@gmail.com',
-      mh: 'tourist.department.mh@gmail.com',
-      rajasthan: 'tourist.department.rj@gmail.com',
-      rj: 'tourist.department.rj@gmail.com',
-      kerala: 'tourist.department.kl@gmail.com',
-      kl: 'tourist.department.kl@gmail.com',
-      goa: 'tourist.department.ga@gmail.com',
-      ga: 'tourist.department.ga@gmail.com',
-      'himachal pradesh': 'tourist.department.hp@gmail.com',
-      hp: 'tourist.department.hp@gmail.com',
-      'tamil nadu': 'tourist.department.tn@gmail.com',
-      tn: 'tourist.department.tn@gmail.com',
-      karnataka: 'tourist.department.ka@gmail.com',
-      ka: 'tourist.department.ka@gmail.com',
-      'west bengal': 'tourist.department.wb@gmail.com',
-      wb: 'tourist.department.wb@gmail.com',
-      gujarat: 'tourist.department.gj@gmail.com',
-      gj: 'tourist.department.gj@gmail.com'
-    };
-
-    const email = stateMapping[normalizedState];
+    const department = typeof state === 'string' ? require('../config/tourismStates').findState(state.trim().replace(/\s+/g, ' ')) : null;
+    const email = department?.email;
     if (!email) {
       return res.status(404).json({
         success: false,

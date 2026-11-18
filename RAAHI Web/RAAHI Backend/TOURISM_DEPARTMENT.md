@@ -16,3 +16,9 @@ Tests: node --test tests/tourism.test.js tests/tourism-access.test.js
 Frontend tests: node --test tests/departmentForm.test.mjs
 
 Registered Tourists: GET /api/tourism/tourists reads current matching tourist profiles from MongoDB. State remains server-controlled. The department page refreshes the list and overview every 10 seconds, paginates at 50 records and supports name/ID/destination search. The response includes name, traveler ID, declared destination, duration and timestamps; no email, phone, health, identity-number or precise GPS fields are returned. Goa is entered during the existing post-signup profile step. Updating a destination automatically changes department membership; nothing is copied into a second collection.
+
+## State workspaces
+
+All 28 states have separate URLs: `/tourism-department/<state-name-with-hyphens>`. Login routes directly to the assigned state. Opening another state URL redirects to the signed-in department's workspace; API state scope always comes from the account.
+
+Provision accounts explicitly with `node scripts/provisionTourismStates.js` from the backend directory. This sets each password to the lowercase state name without spaces followed by `123` (Goa: `goa123`; Uttar Pradesh: `uttarpradesh123`). It is not run on server startup. Union territories are outside this state-account setup.

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, Link, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/departmentApi';
 import { sections, statuses, fields, formFor, payloadFor } from './departmentConfig';
@@ -44,6 +44,7 @@ function RecordEditor({ editor, onClose, onSave, saving, error }) {
 }
 
 export default function TourismDepartment() {
+  const { stateSlug } = useParams();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [active, setActive] = useState('overview');
   const [overview, setOverview] = useState(null);
@@ -61,11 +62,14 @@ export default function TourismDepartment() {
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [version, setVersion] = useState(0);
+  const assignedSlug = user?.location?.trim().toLowerCase().replace(/\s+/g, '-');
+  const statePage = `/tourism-department/${assignedSlug}`;
   const authorized = user?.role === 'tourist_department';
+  const matchingPage = authorized && stateSlug === assignedSlug;
   const isRecords = Boolean(statuses[active]);
 
   useEffect(() => {
-    if (!authorized) return undefined;
+    if (!matchingPage) return undefined;
     const controller = new AbortController();
     let disposed = false;
     const load = async () => {
@@ -86,15 +90,16 @@ export default function TourismDepartment() {
     };
     const timer = setTimeout(load, query ? 300 : 0);
     return () => { disposed = true; clearTimeout(timer); controller.abort(); };
-  }, [authorized, active, page, query, status, version]);
+  }, [matchingPage, active, page, query, status, version]);
   useEffect(() => {
-    if (!authorized) return undefined;
+    if (!matchingPage) return undefined;
     const timer = setInterval(() => setVersion(value => value + 1), ['overview', 'tourists', 'crowd'].includes(active) ? 10000 : 60000);
     return () => clearInterval(timer);
-  }, [authorized, active]);
+  }, [matchingPage, active]);
 
   if (!isLoading && (!isAuthenticated || !authorized)) return <Navigate to="/login" replace />;
   if (isLoading && !user) return <main className="td-workspace"><p>Loading department workspace...</p></main>;
+  if (authorized && assignedSlug && stateSlug !== assignedSlug) return <Navigate to={statePage} replace />;
   const current = sections.find(section => section.id === active);
   const choose = id => { setActive(id); setQuery(''); setStatus(''); setPage(1); setRecords([]); setTourists([]); setTotal(0); setNotice(''); setError(''); };
   const edit = record => { setEditor({ kind: active, record }); setFormError(''); };

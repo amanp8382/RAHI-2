@@ -29,7 +29,7 @@ router.use(sanitizeInput);
 router.post('/register', validateRegistration, validateTravelPreferences, requireAccountDatabase, register);
 router.post('/police-login', requireAccountDatabase, policeLogin);
 router.post('/login', validateLogin, requireAccountDatabase, login);
-router.post('/tourist-dept-login', touristDepartmentLogin);
+router.post('/tourist-dept-login', requireAccountDatabase, touristDepartmentLogin);
 router.post('/verify-firebase', verifyFirebaseToken);
 
 // Protected routes (require authentication)

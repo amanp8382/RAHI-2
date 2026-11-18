@@ -125,3 +125,5 @@ const citiesByState = {
   Gujarat: ['Ahmedabad', 'Surat', 'Vadodara'], Delhi: ['New Delhi']
 };
 module.exports.destinationPattern = state => new RegExp(`^(?:${[state, ...(citiesByState[state] || [])].map(escapeRegex).join('|')})(?:, ?(?:${escapeRegex(state)}|India))?(?:, ?India)?$`, 'i');
+
+module.exports.STATES = STATES;

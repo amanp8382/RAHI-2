@@ -82,7 +82,7 @@ const Login = () => {
         if (result.userType === 'police' || result.user?.role === 'police') {
           navigate('/police-dashboard');
         } else if (result.user?.role === 'tourist_department' || result.userType === 'department') {
-          navigate('/tourism-department');
+          navigate(`/tourism-department/${(result.user?.location || currentData.state).trim().toLowerCase().replace(/\s+/g, '-')}`);
         } else {
           const shouldCompleteProfile = !(
             result.user?.phone &&

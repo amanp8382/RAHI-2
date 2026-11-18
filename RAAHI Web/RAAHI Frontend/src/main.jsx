@@ -30,6 +30,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/tourism-information" element={<TourismPublicInfo />} />
           <Route path="/tourism-department" element={<TourismDepartment />} />
+          <Route path="/tourism-department/:stateSlug" element={<TourismDepartment />} />
           <Route path="/police-dashboard" element={<PoliceDashboard />} />
           <Route path="/police-dashboard.html" element={<PoliceDashboard />} />
           <Route path="/admin" element={<Admin />} />
