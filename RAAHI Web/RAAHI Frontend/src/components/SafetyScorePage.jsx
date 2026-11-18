@@ -12,14 +12,6 @@ const SafetyScorePage = () => {
   const [prediction, setPrediction] = useState(null);
   const [error, setError] = useState('');
 
-  if (!isLoading && !isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!isLoading && user?.userType !== 'tourist') {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   useEffect(() => {
     if (!user?.travelerId) {
       return undefined;
@@ -34,7 +26,7 @@ const SafetyScorePage = () => {
       try {
         setError('');
         setStatus(`Live location active (${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)})`);
-        saveTravelerLiveLocation(user.travelerId, {
+        await saveTravelerLiveLocation(user.travelerId, {
           lat: coords.latitude,
           lng: coords.longitude,
           accuracy: coords.accuracy,
@@ -71,6 +63,14 @@ const SafetyScorePage = () => {
       navigator.geolocation.clearWatch(watchId);
     };
   }, [user?.travelerId, user?.destination]);
+
+  if (!isLoading && !isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isLoading && user?.userType !== 'tourist') {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const score = prediction?.score ?? 0;
   const tone = score >= 80 ? 'safe' : score >= 60 ? 'watch' : score >= 40 ? 'elevated' : 'danger';

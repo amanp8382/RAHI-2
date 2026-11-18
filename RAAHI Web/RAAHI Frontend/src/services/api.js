@@ -27,7 +27,7 @@ const chatbotFallbackClients = [
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -39,12 +39,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const token = localStorage.getItem('authToken') || '';
+    const token = sessionStorage.getItem('authToken') || '';
     const isLocalSession = token.startsWith('local-auth-token-') || token.startsWith('mock-jwt-token-');
 
-    if (error.response?.status === 401 && !isLocalSession) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
+    if (error.response?.status === 401 && !isLocalSession && !error.config?.url?.startsWith('/auth/')) {
+      sessionStorage.removeItem('authToken');
+
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login.html';
       }
@@ -59,6 +59,7 @@ const apiService = {
   auth: {
     login: async (credentials) => (await api.post('/auth/login', credentials)).data,
     touristDepartmentLogin: async (credentials) => (await api.post('/auth/tourist-dept-login', credentials)).data,
+    policeLogin: async (data) => (await api.post('/auth/police-login', data)).data,
     register: async (userData) => (await api.post('/auth/register', userData)).data,
     logout: async () => (await api.post('/auth/logout')).data
   },
@@ -71,6 +72,11 @@ const apiService = {
     updateProfile: async (userData) => (await api.put('/auth/profile', userData)).data
   },
 
+  travelers: {
+    list: async () => (await api.get('/travelers')).data,
+    get: async id => (await api.get(`/travelers/${encodeURIComponent(id)}`)).data,
+    saveLocation: async location => (await api.put('/travelers/me/location', location)).data
+  },
   destinations: {
     getAll: async (params) => (await api.get('/destinations', { params })).data,
     getById: async (id) => (await api.get(`/destinations/${id}`)).data,
@@ -83,7 +89,7 @@ const apiService = {
   ai: {
     getSafetyRecommendations: async (location) => (await api.post('/ai/safety-recommendations', { location })).data,
     analyzeRisk: async (data) => (await api.post('/ai/risk-analysis', data)).data,
-    getLiveSafetyScore: async (data) => (await api.post('/ai/live-safety-score', data)).data,
+    getLiveSafetyScore: async (data, options = {}) => (await api.post('/ai/live-safety-score', data, { ...options, timeout: 30000 })).data,
     getChatbotResponse: async (message) => {
       let lastError;
 

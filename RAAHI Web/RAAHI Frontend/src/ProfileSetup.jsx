@@ -116,7 +116,7 @@ const ProfileSetup = () => {
 
     if (!formData.bloodGroup) nextErrors.bloodGroup = 'Blood group is required.';
 
-    if (!isValidAadhaar(formData.aadhaarNumber)) nextErrors.aadhaarNumber = 'Aadhaar number must contain exactly 12 digits.';
+    if ((formData.aadhaarNumber || !user?.aadhaarVerified) && !isValidAadhaar(formData.aadhaarNumber)) nextErrors.aadhaarNumber = 'Aadhaar number must contain exactly 12 digits.';
 
     if (formData.travelPreferences.length === 0) nextErrors.travelPreferences = 'Select at least one travel preference.';
 
@@ -135,8 +135,7 @@ const ProfileSetup = () => {
       tripDurationDays: Number(formData.tripDurationDays),
       bloodGroup: formData.bloodGroup,
       medicalConditions: formData.medicalConditions.trim(),
-      aadhaarNumber: normalizeAadhaar(formData.aadhaarNumber),
-      aadhaarVerified: isValidAadhaar(formData.aadhaarNumber),
+      ...(formData.aadhaarNumber ? { aadhaarNumber: normalizeAadhaar(formData.aadhaarNumber) } : {}),
       travelPreferences: formData.travelPreferences,
       profilePhoto: formData.profilePhoto
     };

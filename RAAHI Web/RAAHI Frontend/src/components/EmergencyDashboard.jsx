@@ -1,18 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { getAllTravelerRecords } from '../utils/travelerLedger';
-import { getAllTravelerLiveLocations } from '../utils/liveLocationStore';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { getAllTravelerRecords, refreshTravelerRecords } from '../utils/travelerLedger';
+import { getAllTravelerLiveLocations, updateLiveLocationCache } from '../utils/liveLocationStore';
 import './EmergencyDashboard.css';
 
-const SAFE_ZONES = [
-  { id: 'safe-1', label: 'Safe Zone A', cx: 140, cy: 100, r: 56, color: 'rgba(34, 197, 94, 0.28)' },
-  { id: 'safe-2', label: 'Safe Zone B', cx: 340, cy: 95, r: 50, color: 'rgba(34, 197, 94, 0.28)' },
-  { id: 'safe-3', label: 'Safe Zone C', cx: 470, cy: 170, r: 60, color: 'rgba(34, 197, 94, 0.28)' }
-];
-
-const DANGER_ZONES = [
-  { id: 'danger-1', label: 'Red Alert Zone', x: 250, y: 225, width: 120, height: 72, color: 'rgba(239, 68, 68, 0.32)' },
-  { id: 'danger-2', label: 'Restricted Zone', x: 88, y: 215, width: 92, height: 58, color: 'rgba(220, 38, 38, 0.28)' }
-];
+const PoliceIndiaMap = lazy(() => import('./PoliceIndiaMap'));
+import { hasValidCoordinates, isRecentLocation } from '../utils/locationValidation';
 
 const buildRiskLevel = (record) => {
   if (record.medicalConditions && record.medicalConditions.toLowerCase() !== 'none') return 'high';
@@ -24,32 +16,6 @@ const buildStatus = (record) => {
   if (!record.phone) return 'offline';
   if (buildRiskLevel(record) === 'high') return 'emergency';
   return 'active';
-};
-
-const buildMockPoint = (index) => {
-  const points = [
-    { x: 150, y: 110 },
-    { x: 315, y: 110 },
-    { x: 460, y: 170 },
-    { x: 305, y: 258 },
-    { x: 135, y: 235 }
-  ];
-  return points[index % points.length];
-};
-
-const projectToMap = (lat, lng) => {
-  const minLat = 28.45;
-  const maxLat = 28.75;
-  const minLng = 76.95;
-  const maxLng = 77.35;
-
-  const normalizedX = (lng - minLng) / (maxLng - minLng);
-  const normalizedY = (lat - minLat) / (maxLat - minLat);
-
-  return {
-    x: Math.min(560, Math.max(40, 40 + normalizedX * 520)),
-    y: Math.min(320, Math.max(40, 320 - normalizedY * 260))
-  };
 };
 
 const EmergencyDashboard = ({ travelerRecords = null, viewerLabel = 'System Admin' }) => {
@@ -65,23 +31,42 @@ const EmergencyDashboard = ({ travelerRecords = null, viewerLabel = 'System Admi
     return () => clearInterval(timer);
   }, []);
 
-  const [locationTick, setLocationTick] = useState(0);
+  const [liveLocations, setLiveLocations] = useState(getAllTravelerLiveLocations);
+  const [serverRecords, setServerRecords] = useState(getAllTravelerRecords);
+  const [dataError, setDataError] = useState('');
+  useEffect(() => {
+    if (travelerRecords !== null) return undefined;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const records = await refreshTravelerRecords();
+        if (active) { setServerRecords(records); setLiveLocations(updateLiveLocationCache(records)); setDataError(''); }
+      } catch { if (active) setDataError('Sign in with an authorized police or department account to load MongoDB traveler data.'); }
+    };
+    void refresh(); const timer = setInterval(refresh, 10000);
+    return () => { active = false; clearInterval(timer); };
+  }, [travelerRecords]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setLocationTick((value) => value + 1);
-    }, 5000);
-    return () => clearInterval(timer);
+    const refresh = () => setLiveLocations(getAllTravelerLiveLocations());
+    const timer = setInterval(refresh, 5000);
+    window.addEventListener('storage', refresh);
+    window.addEventListener('raahi-location-update', refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('storage', refresh);
+      window.removeEventListener('raahi-location-update', refresh);
+    };
   }, []);
 
+  useEffect(() => {
+    if (travelerRecords) setLiveLocations(updateLiveLocationCache(travelerRecords));
+  }, [travelerRecords]);
+
   const liveTravelers = useMemo(() => {
-    const source = travelerRecords ?? getAllTravelerRecords();
-    const liveLocations = getAllTravelerLiveLocations();
-    return source.map((record, index) => {
+    const source = travelerRecords ?? serverRecords;
+    return source.map((record) => {
       const liveLocation = liveLocations[record.travelerId];
-      const point = liveLocation?.lat && liveLocation?.lng
-        ? projectToMap(liveLocation.lat, liveLocation.lng)
-        : buildMockPoint(index);
       return {
         id: record.travelerId,
         name: record.fullName || 'Unnamed traveler',
@@ -98,16 +83,14 @@ const EmergencyDashboard = ({ travelerRecords = null, viewerLabel = 'System Admi
         status: buildStatus(record),
         currentLocation: {
           address: liveLocation?.address || record.destination || 'Live route not shared',
-          lat: liveLocation?.lat || null,
-          lng: liveLocation?.lng || null,
-          accuracy: liveLocation?.accuracy || null,
-          updatedAt: liveLocation?.updatedAt || record.updatedAt || record.issuedAt || new Date().toISOString(),
-          x: point.x,
-          y: point.y
+          lat: liveLocation?.lat ?? null,
+          lng: liveLocation?.lng ?? null,
+          accuracy: liveLocation?.accuracy ?? null,
+          updatedAt: liveLocation?.updatedAt || null
         }
       };
     });
-  }, [travelerRecords, locationTick]);
+  }, [travelerRecords, serverRecords, liveLocations]);
 
   const filteredTravelers = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -125,9 +108,9 @@ const EmergencyDashboard = ({ travelerRecords = null, viewerLabel = 'System Admi
   const stats = useMemo(() => ({
     totalTravelers: liveTravelers.length,
     activeAlerts: liveTravelers.filter((traveler) => traveler.riskLevel === 'high').length,
-    safeZones: SAFE_ZONES.length,
-    redZones: DANGER_ZONES.length
-  }), [liveTravelers]);
+    recentLocations: liveTravelers.filter(t => isRecentLocation(t.currentLocation, currentTime.getTime())).length,
+    missingLocations: liveTravelers.filter(t => !hasValidCoordinates(t.currentLocation)).length
+  }), [liveTravelers, currentTime]);
 
   const recentAlerts = useMemo(() => (
     liveTravelers
@@ -149,6 +132,7 @@ const EmergencyDashboard = ({ travelerRecords = null, viewerLabel = 'System Admi
   }, [recentAlerts.length]);
 
   const formatTime = (value) => {
+    if (!value) return 'Not shared';
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? 'Unknown' : date.toLocaleString();
   };
@@ -180,9 +164,9 @@ const EmergencyDashboard = ({ travelerRecords = null, viewerLabel = 'System Admi
           <div className="stat-header">
             <div className="stat-icon green">Safe</div>
             <div className="stat-info">
-              <div className="stat-value">{stats.safeZones}</div>
-              <div className="stat-title">Green Zones</div>
-              <div className="stat-subtitle">Safe movement areas</div>
+              <div className="stat-value">{stats.recentLocations}</div>
+              <div className="stat-title">Recent GPS Updates</div>
+              <div className="stat-subtitle">Reported within 2 minutes</div>
             </div>
           </div>
         </div>
@@ -190,9 +174,9 @@ const EmergencyDashboard = ({ travelerRecords = null, viewerLabel = 'System Admi
           <div className="stat-header">
             <div className="stat-icon red">Red</div>
             <div className="stat-info">
-              <div className="stat-value">{stats.redZones}</div>
-              <div className="stat-title">Red Zones</div>
-              <div className="stat-subtitle">High alert areas</div>
+              <div className="stat-value">{stats.missingLocations}</div>
+              <div className="stat-title">No GPS Shared</div>
+              <div className="stat-subtitle">Awaiting location permission</div>
             </div>
           </div>
         </div>
@@ -202,50 +186,11 @@ const EmergencyDashboard = ({ travelerRecords = null, viewerLabel = 'System Admi
         <div className="dashboard-card heatmap-card">
           <div className="card-header">
             <h3>Police Zone Map</h3>
-            <p>Green zones are safe. Red zones require immediate watch.</p>
+            <p>India overview with real reported GPS locations. Zoom in or select a traveler to inspect their position.</p>
           </div>
-          <div className="heatmap-container">
-            <div className="heatmap-display">
-              <svg viewBox="0 0 600 350" className="heatmap-svg">
-                {SAFE_ZONES.map((zone) => (
-                  <g key={zone.id}>
-                    <circle cx={zone.cx} cy={zone.cy} r={zone.r} fill={zone.color} stroke="#16a34a" strokeWidth="2" />
-                    <text x={zone.cx} y={zone.cy} textAnchor="middle" fill="#166534" fontSize="12" fontWeight="700">{zone.label}</text>
-                  </g>
-                ))}
-
-                {DANGER_ZONES.map((zone) => (
-                  <g key={zone.id}>
-                    <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} rx="10" fill={zone.color} stroke="#dc2626" strokeWidth="2" />
-                    <text x={zone.x + zone.width / 2} y={zone.y + zone.height / 2} textAnchor="middle" fill="#991b1b" fontSize="12" fontWeight="700">{zone.label}</text>
-                  </g>
-                ))}
-
-                {liveTravelers.map((traveler) => (
-                  <g key={traveler.id}>
-                    <circle cx={traveler.currentLocation.x} cy={traveler.currentLocation.y} r="5" fill={traveler.riskLevel === 'high' ? '#dc2626' : '#16a34a'} stroke="#ffffff" strokeWidth="2" />
-                    <text x={traveler.currentLocation.x + 8} y={traveler.currentLocation.y - 8} fill="#1f2937" fontSize="11" fontWeight="700">
-                      {traveler.name}
-                    </text>
-                  </g>
-                ))}
-              </svg>
-            </div>
-            <div className="heatmap-legend">
-              <div className="legend-item">
-                <div className="legend-dot safe"></div>
-                <span>Green Safe Zone</span>
-              </div>
-              <div className="legend-item">
-                <div className="legend-dot danger"></div>
-                <span>Red Alert Zone</span>
-              </div>
-              <div className="legend-item">
-                <div className="legend-dot tourist"></div>
-                <span>Traveler Position</span>
-              </div>
-            </div>
-          </div>
+          <Suspense fallback={<p className="police-map-note">Loading India map?</p>}>
+            <PoliceIndiaMap travelers={filteredTravelers} now={currentTime.getTime()} />
+          </Suspense>
         </div>
 
         <div className="dashboard-card alerts-card">
@@ -326,8 +271,8 @@ const EmergencyDashboard = ({ travelerRecords = null, viewerLabel = 'System Admi
               <div className="location-address">{traveler.currentLocation.address}</div>
               <div className="location-update">Updated: {formatTime(traveler.currentLocation.updatedAt)}</div>
               <div className="location-update">
-                {traveler.currentLocation.lat && traveler.currentLocation.lng
-                  ? `Live: ${traveler.currentLocation.lat.toFixed(5)}, ${traveler.currentLocation.lng.toFixed(5)}`
+                {hasValidCoordinates(traveler.currentLocation)
+                  ? `Reported GPS: ${traveler.currentLocation.lat.toFixed(5)}, ${traveler.currentLocation.lng.toFixed(5)}`
                   : 'Live location not shared yet'}
               </div>
             </div>
@@ -382,6 +327,7 @@ const EmergencyDashboard = ({ travelerRecords = null, viewerLabel = 'System Admi
         <button className={`nav-tab ${activeTab === 'tourists' ? 'active' : ''}`} onClick={() => setActiveTab('tourists')}>Registered Travelers</button>
       </div>
 
+      {dataError && <p role="alert" className="auth-alert auth-alert-error">{dataError}</p>}
       <div className="dashboard-main">
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'tourists' && renderTravelers()}

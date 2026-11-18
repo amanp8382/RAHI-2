@@ -46,7 +46,10 @@ def main():
     assert spec.loader is not None
     spec.loader.exec_module(module)
 
-    resolved_location_name = reverse_location_name(lat, lng) or location_name
+    try:
+        resolved_location_name = reverse_location_name(lat, lng) or location_name
+    except Exception:
+        resolved_location_name = location_name
     result = module.calculate_safety_score(lat, lng, resolved_location_name)
 
     payload = {

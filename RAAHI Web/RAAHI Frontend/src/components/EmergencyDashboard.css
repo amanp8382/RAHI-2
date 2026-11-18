@@ -1709,3 +1709,25 @@
     padding: 1rem;
   }
 }
+
+/* Geographic police map */
+.police-india-map { padding: 0 20px 20px; }
+.police-map-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; font-size: 13px; color: #475569; }
+.police-map-toolbar button { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: #1e40af; cursor: pointer; margin-left: 6px; }
+.police-map-toolbar button:disabled { opacity: .5; cursor: default; }
+.police-map-canvas { height: 540px; width: 100%; border-radius: 12px; border: 1px solid #cbd5e1; z-index: 1; }
+.police-map-legend { display: flex; flex-wrap: wrap; gap: 20px; font-size: 13px; margin-top: 12px; }
+.police-map-legend span:first-child { color: #2563eb; }
+.police-map-legend span:last-child { color: #64748b; }
+.police-map-note { font-size: 12px; color: #64748b; line-height: 1.5; padding: 8px 0; }
+.police-map-people { display: flex; flex-wrap: wrap; gap: 8px; max-height: 150px; overflow: auto; }
+.police-map-people button { display: grid; gap: 4px; text-align: left; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 12px; cursor: pointer; color: #1e3a8a; }
+.police-map-people span { font-size: 12px; }
+@media (max-width: 640px) { .police-map-canvas { height: 420px; } .police-india-map { padding: 0 12px 12px; } }
+
+.police-zone-radius { display: inline-flex; align-items: center; gap: 6px; }
+.police-zone-radius select { background: white; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px; }
+.police-map-legend .police-zone-green { color: #15803d; }
+.police-map-legend .police-zone-red { color: #b91c1c; }
+
+.police-zone-status { padding: 10px 12px; margin: 10px 0; background: #eff6ff; border-radius: 8px; color: #1e3a8a; font-size: 13px; line-height: 1.5; }

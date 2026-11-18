@@ -10,6 +10,8 @@ import TravelerPass from './TravelerPass.jsx';
 import Dashboard from './components/Dashboard.jsx';
 import Admin from './components/Admin.jsx';
 import PoliceDashboard from './components/PoliceDashboard.jsx';
+import TourismDepartment from './components/TourismDepartment.jsx';
+import TourismPublicInfo from './components/TourismPublicInfo.jsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -26,6 +28,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/profile-setup.html" element={<ProfileSetup />} />
           <Route path="/traveler/:travelerId" element={<TravelerPass />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/tourism-information" element={<TourismPublicInfo />} />
+          <Route path="/tourism-department" element={<TourismDepartment />} />
           <Route path="/police-dashboard" element={<PoliceDashboard />} />
           <Route path="/police-dashboard.html" element={<PoliceDashboard />} />
           <Route path="/admin" element={<Admin />} />

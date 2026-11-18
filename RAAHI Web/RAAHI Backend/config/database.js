@@ -12,17 +12,7 @@ class DatabaseManager {
     try {
       console.log('Initializing database connections...');
 
-      try {
-        if (process.env.MONGODB_URI && process.env.MONGODB_URI !== 'mongodb+srv://username:password@cluster.mongodb.net/database_name') {
-          await connectMongoDB();
-          console.log('MongoDB connection established');
-        } else {
-          console.log('MongoDB not configured - skipping MongoDB initialization');
-        }
-      } catch (mongoError) {
-        console.warn('MongoDB connection failed:', mongoError.message);
-        console.log('Server will continue without MongoDB - please check your MongoDB connection');
-      }
+      await this.connectMongoWithRetry();
 
       try {
         if (hasFirebaseConfig() && process.env.FIREBASE_PROJECT_ID !== 'your-project-id') {
@@ -39,10 +29,10 @@ class DatabaseManager {
       }
 
       this.isConnected = true;
-      console.log('Database connections established successfully');
+      console.log('Database initialization complete; health endpoint reports connection status');
 
       return {
-        mongodb: true,
+        mongodb: require('mongoose').connection.readyState === 1,
         firebase: this.firebaseServices
       };
     } catch (error) {
@@ -55,6 +45,31 @@ class DatabaseManager {
     }
   }
 
+  async connectMongoWithRetry() {
+    if (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('username:password@cluster.mongodb.net')) return;
+    if (this.mongoConnecting) return;
+    this.mongoConnecting = true;
+    try {
+      await connectMongoDB();
+      const User = require('../models/User');
+      await User.collection.updateMany({ travelerId: { $exists: false } }, [
+        { $set: { travelerId: { $concat: ['RAAHI-', { $toString: '$_id' }] } } }
+      ]);
+      await User.createIndexes();
+      await require('../models/TourismRecord').createIndexes();
+      await require('./migratePoliceAccounts')();
+      if (this.mongoRetryTimer) clearInterval(this.mongoRetryTimer);
+      this.mongoRetryTimer = null;
+      console.log('MongoDB connected; account/profile/location storage ready');
+    } catch (error) {
+      console.warn(`MongoDB unavailable (${error.name}); retrying in 30 seconds`);
+      if (!this.mongoRetryTimer) {
+        this.mongoRetryTimer = setInterval(() => { void this.connectMongoWithRetry(); }, 30000);
+        this.mongoRetryTimer.unref();
+      }
+    } finally { this.mongoConnecting = false; }
+  }
+
   getFirebaseServices() {
     if (!this.firebaseServices) {
       throw new Error('Firebase not initialized. Call connect() first.');
@@ -64,6 +79,7 @@ class DatabaseManager {
 
   async disconnect() {
     try {
+      if (this.mongoRetryTimer) clearInterval(this.mongoRetryTimer);
       const mongoose = require('mongoose');
       await mongoose.connection.close();
       console.log('MongoDB connection closed');

@@ -7,19 +7,7 @@ const generateToken = (user) => jwt.sign(
   { expiresIn: '1d' }
 );
 
-const serializeUser = (user) => ({
-  id: user._id,
-  firstName: user.firstName,
-  lastName: user.lastName,
-  email: user.email,
-  phone: user.phone || '',
-  role: user.role,
-  travelPreferences: user.travelPreferences || [],
-  profilePhoto: user.profilePhoto?.dataUrl ? user.profilePhoto : null,
-  location: user.location,
-  isEmailVerified: user.isEmailVerified,
-  isActive: user.isActive
-});
+const serializeUser = require('../utils/serializeUser');
 
 exports.register = async (req, res) => {
   try {
@@ -141,12 +129,16 @@ exports.getMe = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const updates = { ...req.body };
-    delete updates.password;
-    delete updates.email;
-    delete updates.role;
-    delete updates.isEmailVerified;
-    delete updates.isActive;
+    const fields = ['firstName', 'lastName', 'phone', 'age', 'destination', 'tripDurationDays',
+                    'bloodGroup', 'medicalConditions', 'travelPreferences', 'profilePhoto'];
+    const updates = Object.fromEntries(fields.filter(key => req.body[key] !== undefined).map(key => [key, req.body[key]]));
+    if (req.body.aadhaarNumber !== undefined) {
+      const number = String(req.body.aadhaarNumber).replace(/\s/g, '');
+      if (!/^\d{12}$/.test(number)) return res.status(400).json({ success: false, message: 'Aadhaar number must contain 12 digits' });
+      updates.aadhaarNumber = number;
+      updates.aadhaarMasked = `XXXX-XXXX-${number.slice(-4)}`;
+      updates.aadhaarVerified = true; // Format check only, not government verification.
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
@@ -318,4 +310,14 @@ exports.verifyFirebaseToken = async (req, res) => {
     console.error('Verify Firebase Token Error:', err.message);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
+};
+
+exports.policeLogin = async (req, res) => {
+  try {
+    const { pincode, password } = req.body;
+    if (typeof pincode !== 'string' || typeof password !== 'string') return res.status(400).json({ success: false, message: 'Pincode and password are required' });
+    const user = await User.findOne({ role: 'police', pincode: pincode.trim(), isActive: true }).select('+password');
+    if (!user || !(await user.correctPassword(password, user.password))) return res.status(401).json({ success: false, message: 'Invalid police pincode or password' });
+    return res.json({ success: true, token: generateToken(user), user: serializeUser(user) });
+  } catch { return res.status(503).json({ success: false, message: 'Police account service is unavailable' }); }
 };

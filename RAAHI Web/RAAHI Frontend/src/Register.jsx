@@ -82,7 +82,7 @@ const Register = () => {
     setStatus({
       type: 'success',
       message: result.message || 'Account created successfully.',
-      details: []
+      details: result.isOfflineMode ? ['This account is saved in this browser only while the account server is unavailable.'] : []
     });
 
     setTimeout(() => {

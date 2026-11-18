@@ -1,0 +1,1 @@
+{"version": 2, "stored_at": 1795028898.8312566, "value": {"available": true, "source": "OpenWeather current weather", "observed_at": 1795028762.0, "temperature": 14.99, "precipitation": 0.0, "alerts_available": false, "reason": "Weather context only; severe-weather alerts are not provided by this endpoint"}}

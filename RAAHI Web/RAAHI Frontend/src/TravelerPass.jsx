@@ -62,8 +62,8 @@ const TravelerPass = () => {
           <h1>{status.valid ? 'Verified Traveler' : 'Credential Warning'}</h1>
           <p className="auth-subtitle">
             {status.valid
-              ? 'This traveler card matches the current local credential ledger.'
-              : 'The traveler record was found, but the credential chain did not verify cleanly.'}
+              ? 'This traveler card matches the current MongoDB traveler record.'
+              : 'The traveler record was found, but the record could not be retrieved.'}
           </p>
           <div className="auth-tip-list">
             <div>Traveler ID: {record.travelerId}</div>
@@ -74,7 +74,7 @@ const TravelerPass = () => {
 
         <div className="auth-form">
           <div className={`auth-alert ${status.valid ? 'auth-alert-success' : 'auth-alert-error'}`}>
-            <p>{status.valid ? 'Credential chain valid' : 'Credential chain invalid'}</p>
+            <p>{status.valid ? 'MongoDB record found' : 'Record unavailable'}</p>
           </div>
 
           <div className="traveler-pass-card">

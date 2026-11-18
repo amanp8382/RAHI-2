@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   register,
+  policeLogin,
   login,
   getMe,
   updateProfile,
@@ -18,14 +19,16 @@ const {
   sanitizeInput
 } = require('../middleware/validation');
 
+const requireAccountDatabase = require('../middleware/requireAccountDatabase');
 const router = express.Router();
 
 // Apply input sanitization to all routes
 router.use(sanitizeInput);
 
 // Public routes
-router.post('/register', validateRegistration, validateTravelPreferences, register);
-router.post('/login', validateLogin, login);
+router.post('/register', validateRegistration, validateTravelPreferences, requireAccountDatabase, register);
+router.post('/police-login', requireAccountDatabase, policeLogin);
+router.post('/login', validateLogin, requireAccountDatabase, login);
 router.post('/tourist-dept-login', touristDepartmentLogin);
 router.post('/verify-firebase', verifyFirebaseToken);
 

@@ -16,6 +16,7 @@ import Admin from './components/Admin';
 import AdminDashboard from './components/AdminDashboard';
 import EmergencyDashboard from './components/EmergencyDashboard';
 import Login from './Login';
+import TourismDepartment from './components/TourismDepartment';
 import PanicSystemExample from './components/PanicSystemExample';
 
 const App = () => {
@@ -171,6 +172,8 @@ const App = () => {
         return <Admin />;
       case 'login':
         return <Login />;
+      case 'tourism-department':
+        return <TourismDepartment />;
       case 'emergency-dashboard':
         return hasEmergencyAccess ? <EmergencyDashboard viewerLabel={user?.stationName || user?.fullName || 'Emergency Access'} /> : <Home onPageChange={handlePageChange} />;
       case 'panic-example':

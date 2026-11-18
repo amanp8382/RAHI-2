@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getAllTravelerRecords } from '../utils/travelerLedger';
+import { refreshTravelerRecords } from '../utils/travelerLedger';
 import EmergencyDashboard from './EmergencyDashboard';
 import '../styles/auth.css';
 
@@ -11,7 +11,18 @@ const PoliceDashboard = () => {
   const [activeTab, setActiveTab] = useState('travelers');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const travelerRecords = useMemo(() => getAllTravelerRecords(), [user]);
+  const [travelerRecords, setTravelerRecords] = useState([]);
+  const [dataError, setDataError] = useState('');
+  useEffect(() => {
+    if (user?.userType !== 'police') return undefined;
+    let active = true;
+    const refresh = async () => {
+      try { const records = await refreshTravelerRecords(); if (active) { setTravelerRecords(records); setDataError(''); } }
+      catch { if (active) setDataError('Unable to load traveler records from MongoDB. Check the backend connection.'); }
+    };
+    void refresh(); const timer = setInterval(refresh, 10000);
+    return () => { active = false; clearInterval(timer); };
+  }, [user?.userType]);
 
   const filteredTravelers = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -51,6 +62,7 @@ const PoliceDashboard = () => {
           <button type="button" className="auth-submit secondary" onClick={handleLogout}>Logout</button>
         </div>
 
+        {dataError && <p role="alert" className="auth-alert auth-alert-error">{dataError}</p>}
         <div className="admin-tabs">
           <button type="button" className={`admin-tab ${activeTab === 'travelers' ? 'active' : ''}`} onClick={() => setActiveTab('travelers')}>Registered Travelers</button>
           <button type="button" className={`admin-tab ${activeTab === 'emergency' ? 'active' : ''}`} onClick={() => setActiveTab('emergency')}>Emergency Dashboard</button>

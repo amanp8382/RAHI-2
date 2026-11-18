@@ -1,34 +1,18 @@
-const LIVE_LOCATION_KEY = 'raahi_live_locations_v1';
-
-const readStore = () => {
-  try {
-    const raw = localStorage.getItem(LIVE_LOCATION_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch (error) {
-    console.error('Failed to read live locations:', error);
-    return {};
-  }
+import apiService from '../services/api';
+import { hasValidCoordinates } from './locationValidation';
+let locations = {};
+export const updateLiveLocationCache = records => {
+  locations = Object.fromEntries(records.filter(record => hasValidCoordinates(record.liveLocation)).map(record => [record.travelerId, record.liveLocation]));
+  return locations;
 };
-
-const writeStore = (value) => {
-  localStorage.setItem(LIVE_LOCATION_KEY, JSON.stringify(value));
+export const saveTravelerLiveLocation = async (travelerId, location) => {
+  if (!travelerId || !hasValidCoordinates(location)) return null;
+  const response = await apiService.travelers.saveLocation({ lat: location.lat, lng: location.lng, accuracy: location.accuracy });
+  locations[travelerId] = response.location;
+  window.dispatchEvent(new Event('raahi-location-update'));
+  return response.location;
 };
+export const getTravelerLiveLocation = id => locations[id] || null;
+export const getAllTravelerLiveLocations = () => locations;
 
-export const saveTravelerLiveLocation = (travelerId, location) => {
-  if (!travelerId || !location) return null;
-
-  const store = readStore();
-  store[travelerId] = {
-    ...location,
-    updatedAt: new Date().toISOString()
-  };
-  writeStore(store);
-  return store[travelerId];
-};
-
-export const getTravelerLiveLocation = (travelerId) => {
-  const store = readStore();
-  return store[travelerId] || null;
-};
-
-export const getAllTravelerLiveLocations = () => readStore();
+export const clearLocationCache = () => { locations = {}; };

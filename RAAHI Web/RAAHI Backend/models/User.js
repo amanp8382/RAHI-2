@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { randomUUID } = require('crypto');
 
 const profilePhotoSchema = new mongoose.Schema({
   name: {
@@ -30,7 +31,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: false,
+    unique: true,
     lowercase: true,
     trim: true,
     match: [/\S+@\S+\.\S+/, 'Please provide a valid email address']
@@ -48,8 +49,26 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin', 'tourist_department'],
+    enum: ['user', 'admin', 'tourist_department', 'police'],
     default: 'user'
+  },
+  travelerId: { type: String, default: () => `RAAHI-${randomUUID()}`, unique: true },
+  age: { type: Number, min: 1, max: 120 },
+  destination: { type: String, default: '' },
+  tripDurationDays: { type: Number, min: 1, max: 3650 },
+  bloodGroup: { type: String, default: '' },
+  medicalConditions: { type: String, default: '' },
+  aadhaarNumber: { type: String, select: false },
+  aadhaarMasked: { type: String, default: '' },
+  aadhaarVerified: { type: Boolean, default: false },
+  stationName: String,
+  pincode: String,
+  credentialHash: { type: String, default: randomUUID },
+  liveLocation: {
+    lat: { type: Number, min: -90, max: 90 },
+    lng: { type: Number, min: -180, max: 180 },
+    accuracy: { type: Number, min: 0 },
+    updatedAt: Date
   },
   firebaseUid: String,
   travelPreferences: {

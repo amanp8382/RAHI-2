@@ -20,6 +20,9 @@ const authenticate = async (req, res, next) => {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (require('mongoose').connection.readyState !== 1) {
+      return res.status(503).json({ success: false, message: 'Account database is unavailable' });
+    }
     
     // Get user from database (exclude password)
     const user = await User.findById(decoded.id).select('-password');

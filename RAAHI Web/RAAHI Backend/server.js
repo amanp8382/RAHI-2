@@ -72,10 +72,18 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.path === '/api/health'
+  skip: (req) => req.path === '/api/health' || req.path.startsWith('/api/auth/') || req.path.startsWith('/api/travelers') || (req.path === '/api/tourism' || req.path.startsWith('/api/tourism/'))
 });
 
 app.use(limiter);
+// Background map requests must not consume the account request budget.
+app.use('/api/auth', rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 100,
+  message: { success: false, message: 'Too many account requests. Please wait before trying again.' },
+  standardHeaders: true,
+  legacyHeaders: false
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
@@ -90,6 +98,9 @@ app.use((req, res, next) => {
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/travelers', require('./routes/travelers'));
+app.use('/api/tourism', require('./routes/tourism'));
+app.use('/api/tourism-public', require('./routes/tourismPublic'));
 app.use('/api/destinations', destinationRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/emergency', emergencyRoutes);

@@ -34,6 +34,7 @@ const Header = ({ onPageChange, currentPage }) => {
         </Link>
 
         <nav className="nav-desktop">
+          {user?.role === 'tourist_department' && <Link to="/tourism-department" className="nav-link">Tourism Department</Link>}
           <a href="#home" className={`nav-link ${currentPage === 'home' ? 'active' : ''}`} onClick={() => handleLinkClick('home')}>Home</a>
           <a href="#dashboard" className={`nav-link ${currentPage === 'dashboard' ? 'active' : ''}`} onClick={() => handleLinkClick('dashboard')}>Tourist Dashboard</a>
           {isTouristUser && (
@@ -79,6 +80,7 @@ const Header = ({ onPageChange, currentPage }) => {
       <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="mobile-nav-content">
           <a href="#home" className="mobile-nav-link" data-page="home" onClick={() => handleLinkClick('home')}>Home</a>
+          {user?.role === 'tourist_department' && <Link to="/tourism-department" className="mobile-nav-link">Tourism Department</Link>}
           <a href="#dashboard" className="mobile-nav-link" data-page="dashboard" onClick={() => handleLinkClick('dashboard')}>Tourist Dashboard</a>
           {isTouristUser && (
             <a href="#safety-score" className="mobile-nav-link" data-page="safety-score" onClick={() => handleLinkClick('safety-score')}>Safety Score</a>

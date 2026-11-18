@@ -22,23 +22,11 @@ const Dashboard = () => {
   const [locationStatus, setLocationStatus] = useState('Requesting live location...');
   const [liveLocation, setLiveLocation] = useState(null);
 
-  if (!isLoading && !isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!isLoading && isAuthenticated && !hasCompletedProfile(user)) {
-    return <Navigate to="/profile-setup" replace />;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  const displayName = user.fullName || [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Traveler';
-  const profileImage = user.profilePhoto?.dataUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0f766e&color=fff&size=160`;
-  const publicCardUrl = user.publicCardPath ? `${window.location.origin}${user.publicCardPath}` : '';
+  const displayName = user?.fullName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Traveler';
+  const profileImage = user?.profilePhoto?.dataUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0f766e&color=fff&size=160`;
+  const publicCardUrl = user?.publicCardPath ? `${window.location.origin}${user.publicCardPath}` : '';
   const qrCodeUrl = publicCardUrl ? getTravelerQrUrl(publicCardUrl) : '';
-  const aadhaarDisplay = user.aadhaarNumber ? `XXXX-XXXX-${String(user.aadhaarNumber).slice(-4)}` : 'Not provided';
+  const aadhaarDisplay = user?.aadhaarNumber ? `XXXX-XXXX-${String(user.aadhaarNumber).slice(-4)}` : (user?.aadhaarMasked || 'Not provided');
 
   const handleLogout = async () => {
     await logout();
@@ -58,8 +46,9 @@ const Dashboard = () => {
     }
 
     const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const nextLocation = saveTravelerLiveLocation(user.travelerId, {
+      async (position) => {
+        try {
+        const nextLocation = await saveTravelerLiveLocation(user.travelerId, {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
           accuracy: position.coords.accuracy,
@@ -67,6 +56,7 @@ const Dashboard = () => {
         });
         setLiveLocation(nextLocation);
         setLocationStatus(`Live location active (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`);
+        } catch { setLocationStatus('GPS available, but location could not be saved to the server.'); }
       },
       () => {
         setLocationStatus('Location permission denied or unavailable.');
@@ -82,6 +72,19 @@ const Dashboard = () => {
       navigator.geolocation.clearWatch(watchId);
     };
   }, [user?.travelerId, user?.userType, user?.destination]);
+
+  if (!isLoading && !isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isLoading && isAuthenticated && !hasCompletedProfile(user)) {
+    return <Navigate to="/profile-setup" replace />;
+  }
+
+  if (!user) {
+    return null;
+  }
+
 
   return (
     <div className="auth-page dashboard-page">
